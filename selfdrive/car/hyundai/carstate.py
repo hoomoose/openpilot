@@ -184,7 +184,7 @@ class CarState(CarStateBase):
     ret.standstill = ret.vEgoRaw < 0.1
 
     ret.steeringRateDeg = cp.vl["STEERING_SENSORS"]["STEERING_RATE"]
-    ret.steeringAngleDeg = cp.vl["STEERING_SENSORS"]["STEERING_ANGLE"] * -1
+    ret.steeringAngleDeg = cp.vl["MDPS"]["STEERING_ANGLE"] * -1
     ret.steeringTorque = cp.vl["MDPS"]["STEERING_COL_TORQUE"]
     ret.steeringTorqueEps = cp.vl["MDPS"]["STEERING_OUT_TORQUE"]
     ret.steeringPressed = abs(ret.steeringTorque) > self.params.STEER_THRESHOLD
@@ -426,7 +426,7 @@ class CarState(CarStateBase):
       ("GEAR", gear_msg),
 
       ("STEERING_RATE", "STEERING_SENSORS"),
-      ("STEERING_ANGLE", "STEERING_SENSORS"),
+      ("STEERING_ANGLE", "MDPS"),
       ("STEERING_COL_TORQUE", "MDPS"),
       ("STEERING_OUT_TORQUE", "MDPS"),
       ("LKA_FAULT", "MDPS"),
