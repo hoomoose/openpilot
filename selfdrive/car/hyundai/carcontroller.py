@@ -53,6 +53,7 @@ class CarController:
     self.apply_steer_last = 0
     self.car_fingerprint = CP.carFingerprint
     self.last_button_frame = 0
+    self.resume_count = 0
 
   def update(self, CC, CS):
     actuators = CC.actuators
@@ -130,7 +131,7 @@ class CarController:
           self.accel_last = accel
       else:
         # button presses
-        if (self.frame - self.last_button_frame) * DT_CTRL > 0.25:
+        if (self.frame - self.last_button_frame) * DT_CTRL > 0.05:
           # cruise cancel
           if CC.cruiseControl.cancel:
             if self.CP.flags & HyundaiFlags.CANFD_ALT_BUTTONS:
@@ -148,8 +149,12 @@ class CarController:
               pass
             else:
               for _ in range(20):
-                can_sends.append(hyundaicanfd.create_buttons(self.packer, self.CP, CS.buttons_counter+1, Buttons.RES_ACCEL))
-              self.last_button_frame = self.frame
+                can_sends.extend([hyundaicanfd.create_buttons(self.packer, self.CP, CS.buttons_counter+1, Buttons.RES_ACCEL)] * 6)
+                self.resume_count += 1
+                if self.resume_count > 5:
+                  self.last_button_frame = self.frame
+                  self.resume_count = 0
+
     else:
       can_sends.append(hyundaican.create_lkas11(self.packer, self.frame, self.car_fingerprint, apply_steer, lat_active,
                                                 torque_fault, CS.lkas11, sys_warning, sys_state, CC.enabled,
