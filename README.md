@@ -1,3 +1,5 @@
+cd /data; rm -rf ./openpilot; git clone -b 0me --depth 1 --single-branch https://github.com/hoomoose/openpilot.git openpilot; cd openpilot; git submodule update --init --recursive; git submodule update --recursive --remote; sudo reboot
+
 ![](https://i.imgur.com/b0ZyIx5.jpg)
 
 Table of Contents
