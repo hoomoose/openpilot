@@ -102,7 +102,8 @@ def create_spas_messages(packer, frame, left_blink, right_blink):
 
   values = {
   }
-  ret.append(packer.make_can_msg("SPAS1", get_e_can_bus(CP), values))
+  bus = 5 if CP.flags & HyundaiFlags.CANFD_HDA2 else 6
+  ret.append(packer.make_can_msg("SPAS1", bus, values))
 
   blink = 0
   if left_blink:
@@ -112,7 +113,8 @@ def create_spas_messages(packer, frame, left_blink, right_blink):
   values = {
     "BLINKER_CONTROL": blink,
   }
-  ret.append(packer.make_can_msg("SPAS2", get_e_can_bus(CP), values))
+  bus = 5 if CP.flags & HyundaiFlags.CANFD_HDA2 else 6
+  ret.append(packer.make_can_msg("SPAS2", bus, values))
 
   return ret
 
