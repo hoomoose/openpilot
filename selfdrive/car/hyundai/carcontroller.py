@@ -93,7 +93,8 @@ class CarController:
 
       # for blinkers
       if self.CP.flags & HyundaiFlags.ENABLE_BLINKERS:
-        can_sends.append([0x7b1, 0, b"\x02\x3E\x80\x00\x00\x00\x00\x00", 5])
+        bus = 5 if CP.flags & HyundaiFlags.CANFD_HDA2 else 4
+        can_sends.append([0x7b1, 0, b"\x02\x3E\x80\x00\x00\x00\x00\x00", bus])
 
     # >90 degree steering fault prevention
     # Count up to MAX_ANGLE_FRAMES, at which point we need to cut torque to avoid a steering fault
@@ -126,7 +127,7 @@ class CarController:
         can_sends.append(hyundaicanfd.create_lfahda_cluster(self.packer, self.CP, CC.enabled))
 
       # blinkers
-      if hda2 and self.CP.flags & HyundaiFlags.ENABLE_BLINKERS:
+      if self.CP.flags & HyundaiFlags.ENABLE_BLINKERS:
         can_sends.extend(hyundaicanfd.create_spas_messages(self.packer, self.frame, CC.leftBlinker, CC.rightBlinker))
 
       if self.CP.openpilotLongitudinalControl:
