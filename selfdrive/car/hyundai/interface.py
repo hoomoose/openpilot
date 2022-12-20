@@ -293,7 +293,8 @@ class CarInterface(CarInterfaceBase):
 
     # for blinkers
     if CP.flags & HyundaiFlags.ENABLE_BLINKERS:
-      disable_ecu(logcan, sendcan, bus=5, addr=0x7B1, com_cont_req=b'\x28\x83\x01')
+      bus = 5 if CP.flags & HyundaiFlags.CANFD_HDA2 else 4
+      disable_ecu(logcan, sendcan, bus=bus, addr=0x7B1, com_cont_req=b'\x28\x83\x01')
 
   def _update(self, c):
     ret = self.CS.update(self.cp, self.cp_cam)
