@@ -93,7 +93,7 @@ class CarController:
 
       # for blinkers
       if self.CP.flags & HyundaiFlags.ENABLE_BLINKERS:
-        bus = 5 if CP.flags & HyundaiFlags.CANFD_HDA2 else 6
+        bus = 5 if CP.flags & HyundaiFlags.CANFD_HDA2 else 4
         can_sends.append([0x7b1, 0, b"\x02\x3E\x80\x00\x00\x00\x00\x00", bus])
 
     # >90 degree steering fault prevention
