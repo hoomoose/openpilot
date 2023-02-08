@@ -60,8 +60,10 @@ class CarController:
 
     # steering torque
     new_steer = int(round(actuators.steer * self.params.STEER_MAX))
+    self.params = CarControllerParams(self.CP, CS.out.vEgoRaw)
     apply_steer = apply_std_steer_torque_limits(new_steer, self.apply_steer_last, CS.out.steeringTorque, self.params)
-
+    apply_steer = clip(apply_steer, -self.params.STEER_MAX, self.params.STEER_MAX)
+    
     if not CC.latActive:
       apply_steer = 0
 
