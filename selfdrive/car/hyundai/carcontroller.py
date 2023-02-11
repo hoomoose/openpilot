@@ -55,7 +55,7 @@ class CarController:
     self.last_button_frame = 0
     self.resume_count = 0
 
-  def update(self, CC, CS):
+  def update(self, CC, CS, now_nanos):
     actuators = CC.actuators
     hud_control = CC.hudControl
 
