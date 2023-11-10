@@ -89,6 +89,7 @@ private:
   ButtonControl *errorLogBtn;
   ButtonControl *installBtn;
   ButtonControl *downloadBtn;
+  ButtonControl *mapsBtn;
   ButtonControl *targetBranchBtn;
 
   Params params;

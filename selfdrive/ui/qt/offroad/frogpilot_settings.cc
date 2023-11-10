@@ -219,6 +219,7 @@ FrogPilotVisualsPanel::FrogPilotVisualsPanel(QWidget *parent) : FrogPilotPanel(p
       createSubButtonControl(key, {
         {"ShowFPS", "FPS Counter"},
         {"LeadInfo", "Lead Info and Logics"},
+        {"RoadNameUI", "Road Name"},
       }, mainLayout);
       createSubButtonControl(key, {
         {"UnlimitedLength", "'Unlimited' Road UI Length"},
@@ -465,6 +466,9 @@ void FrogPilotPanel::setParams() {
   }
   if (params.getBool("FireTheBabysitter") and params.getBool("NoLogging")) {
     paramsMemory.putBool("NoLogging", true);
+  }
+  if (params.getBool("RoadNameUI")) {
+    paramsMemory.putBool("OSM", true);
   }
 
   const bool FrogsGoMoo = params.get("DongleId").substr(0, 3) == "be6";

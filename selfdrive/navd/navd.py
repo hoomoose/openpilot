@@ -100,6 +100,7 @@ class RouteEngine:
     if self.localizer_valid:
       self.last_bearing = math.degrees(location.calibratedOrientationNED.value[2])
       self.last_position = Coordinate(location.positionGeodetic.value[0], location.positionGeodetic.value[1])
+      self.params_memory.put("LastGPSPosition", json.dumps({ "latitude": self.last_position.latitude, "longitude": self.last_position.longitude, "bearing": self.last_bearing }))
 
   def recompute_route(self):
     if self.last_position is None:
