@@ -70,13 +70,9 @@ void Sound::updateFrogPilotParams() {
   const bool isSilentMode = params.getBool("SilentMode");
 
   for (auto &[alert, fn, loops, volume] : sound_list) {
-    QSoundEffect *s = new QSoundEffect(this);
-    QObject::connect(s, &QSoundEffect::statusChanged, [=]() {
-      assert(s->status() != QSoundEffect::Error);
-    });
+    auto &[s, _] = sounds[alert];
     s->setSource(QUrl::fromLocalFile(soundPaths[customSounds] + "/" + fn));
     s->setVolume(isSilentMode ? 0 : volume);
-    sounds[alert] = {s, loops};
   }
 }
 
