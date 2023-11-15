@@ -83,6 +83,38 @@ FrogPilotControlsPanel::FrogPilotControlsPanel(QWidget *parent) : FrogPilotPanel
 FrogPilotVehiclesPanel::FrogPilotVehiclesPanel(QWidget *parent) : FrogPilotPanel(parent) {
   mainLayout = new QVBoxLayout(this);
 
+  QHBoxLayout *forceFingerprintLayout = new QHBoxLayout();
+  forceFingerprintLayout->setSpacing(25);
+  forceFingerprintLayout->setContentsMargins(0, 0, 0, 0);
+
+  QLabel *forceFingerprintLabel = new QLabel(tr("Force Fingerprint"));
+  forceFingerprintLayout->addWidget(forceFingerprintLabel);
+
+  forceFingerprintLayout->addStretch(1);
+
+  QString currentCarModel = QString::fromStdString(params.get("CarModel"));
+  QLabel *carModelLabel = new QLabel(currentCarModel);
+  forceFingerprintLayout->addWidget(carModelLabel);
+
+  ButtonControl *forceFingerprintButton = new ButtonControl(tr(""), tr("SET"));
+  forceFingerprintLayout->addWidget(forceFingerprintButton);
+
+  connect(forceFingerprintButton, &ButtonControl::clicked, this, [=]() {
+    std::system("python3 /data/openpilot/scripts/set_fingerprints.py");
+    std::string carModels = params.get("CarModels");
+
+    QStringList cars = QString::fromStdString(carModels).split(',');
+    QString selection = MultiOptionDialog::getSelection(tr("Select Your Car"), cars, currentCarModel, this);
+
+    if (!selection.isEmpty()) {
+      params.put("CarModel", selection.toStdString());
+      carModelLabel->setText(selection);
+    }
+  });
+
+  mainLayout->addLayout(forceFingerprintLayout);
+  mainLayout->addWidget(whiteHorizontalLine());
+
   QHBoxLayout *gmLayout = new QHBoxLayout();
   gmLayout->setSpacing(25);
   gmLayout->setContentsMargins(0, 0, 0, 0);
