@@ -100,6 +100,7 @@ void HomeWindow::mousePressEvent(QMouseEvent* e) {
   if ((onroad->isVisible() || body->isVisible()) && (!sidebar->isVisible() || e->x() > sidebar->width())) {
     sidebar->setVisible(!sidebar->isVisible() && !onroad->isMapVisible());
     uiState()->scene.map_open = onroad->isMapVisible();
+    params.putBool("Sidebar", sidebar->isVisible());
   }
 }
 
