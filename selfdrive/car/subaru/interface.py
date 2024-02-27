@@ -10,6 +10,8 @@ class CarInterface(CarInterfaceBase):
 
   @staticmethod
   def _get_params(ret, params, candidate: CAR, fingerprint, car_fw, disable_openpilot_long, experimental_long, docs):
+    crosstrek_torque_increase = params.get_bool("CrosstrekTorque")
+
     ret.carName = "subaru"
     ret.radarUnavailable = True
     # for HYBRID CARS to be upstreamed, we need:
@@ -43,9 +45,9 @@ class CarInterface(CarInterfaceBase):
     if candidate in (CAR.ASCENT, CAR.ASCENT_2023):
       ret.steerActuatorDelay = 0.3  # end-to-end angle controller
       ret.lateralTuning.init('pid')
-      ret.lateralTuning.pid.kf = 0.00003
+      ret.lateralTuning.pid.kf = 0.00003333 if crosstrek_torque_increase else 0.00003
       ret.lateralTuning.pid.kiBP, ret.lateralTuning.pid.kpBP = [[0., 20.], [0., 20.]]
-      ret.lateralTuning.pid.kpV, ret.lateralTuning.pid.kiV = [[0.0025, 0.1], [0.00025, 0.01]]
+      ret.lateralTuning.pid.kpV, ret.lateralTuning.pid.kiV = [[0.133, 0.2], [0.0133, 0.02]] if crosstrek_torque_increase else [[0.0025, 0.1], [0.00025, 0.01]]
 
     elif candidate == CAR.IMPREZA:
       ret.steerActuatorDelay = 0.4  # end-to-end angle controller
