@@ -123,6 +123,12 @@ class FrogPilotPlannerd:
       acceleration_offset = np.clip((v_lead - v_ego) + standstill_offset - COMFORT_BRAKE, 1, distance_factor)
       t_follow = t_follow / acceleration_offset
 
+    # Offset by FrogAi for FrogPilot for a more natural approach to a slower lead
+    if self.smoother_braking:
+      distance_factor = np.maximum(1, lead_distance - (v_lead * t_follow))
+      braking_offset = np.clip((v_ego - v_lead) - COMFORT_BRAKE, 1, distance_factor)
+      t_follow = t_follow / braking_offset
+
     return t_follow
 
   def update_v_cruise(self, carState, controlsState, enabled, liveLocationKalman, modelData, road_curvature, v_cruise, v_ego):
@@ -205,6 +211,7 @@ class FrogPilotPlannerd:
     self.deceleration_profile = self.params.get_int("DecelerationProfile") if longitudinal_tune else 0
     self.aggressive_acceleration = longitudinal_tune and self.params.get_bool("AggressiveAcceleration")
     self.increased_stopping_distance = self.params.get_int("StoppingDistance") * (1 if self.is_metric else CV.FOOT_TO_METER) if longitudinal_tune else 0
+    self.smoother_braking = longitudinal_tune and self.params.get_bool("SmoothBraking")
 
     self.map_turn_speed_controller = self.params.get_bool("MTSCEnabled")
     self.mtsc_curvature_check = self.map_turn_speed_controller and self.params.get_bool("MTSCCurvatureCheck")
