@@ -40,7 +40,7 @@ private:
   std::set<QString> deviceManagementKeys = {"DeviceShutdown", "LowVoltageShutdown", "MuteOverheated", "NoLogging", "NoUploads", "OfflineMode"};
   std::set<QString> experimentalModeActivationKeys = {"ExperimentalModeViaDistance", "ExperimentalModeViaLKAS", "ExperimentalModeViaScreen"};
   std::set<QString> laneChangeKeys = {"LaneChangeTime", "LaneDetection", "LaneDetectionWidth", "OneLaneChange"};
-  std::set<QString> lateralTuneKeys = {"ForceAutoTune", "NNFF", "NNFFLite", "TurnDesires"};
+  std::set<QString> lateralTuneKeys = {"ForceAutoTune", "NNFF", "NNFFLite", "SteerRatio", "TurnDesires"};
   std::set<QString> longitudinalTuneKeys = {"AccelerationProfile", "AggressiveAcceleration", "DecelerationProfile", "LeadDetectionThreshold", "SmoothBraking", "StoppingDistance", "TrafficMode"};
   std::set<QString> mtscKeys = {"DisableMTSCSmoothing", "MTSCAggressiveness", "MTSCCurvatureCheck", "MTSCLimit"};
   std::set<QString> qolKeys = {"CustomCruise", "DisableOnroadUploads", "HigherBitrate", "OnroadDistanceButton", "PauseLateralOnSignal", "PauseLateralSpeed", "ReverseCruise", "SetSpeedOffset"};
@@ -62,4 +62,6 @@ private:
   bool isMetric;
   bool online;
   bool started;
+
+  float steerRatioStock;
 };
