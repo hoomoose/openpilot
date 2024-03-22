@@ -1183,6 +1183,8 @@ class Controls:
     self.speed_limit_confirmation_lower = self.speed_limit_confirmation and self.params.get_bool("SLCConfirmationLower")
     self.speed_limit_confirmation_higher = self.speed_limit_confirmation and self.params.get_bool("SLCConfirmationHigher")
 
+    self.frogpilot_variables.use_ev_tables = self.params.get_bool("EVTable")
+
 def main():
   config_realtime_process(4, Priority.CTRL_HIGH)
   controls = Controls()
