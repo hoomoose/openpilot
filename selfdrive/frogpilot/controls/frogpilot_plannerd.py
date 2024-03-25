@@ -86,6 +86,13 @@ class FrogPilotPlannerd:
 
     lead_distance = radarState.leadOne.dRel
 
+    # Offset by FrogAi for FrogPilot for a more natural takeoff with a lead
+    if self.aggressive_acceleration:
+      distance_factor = np.maximum(1, lead_distance - (v_lead * t_follow))
+      standstill_offset = max(STOP_DISTANCE - (v_ego**COMFORT_BRAKE), 0)
+      acceleration_offset = np.clip((v_lead - v_ego) + standstill_offset - COMFORT_BRAKE, 1, distance_factor)
+      t_follow = t_follow / acceleration_offset
+
     return t_follow
 
   def update_v_cruise(self, carState, controlsState, enabled, liveLocationKalman, modelData, road_curvature, v_cruise, v_ego):
@@ -124,3 +131,4 @@ class FrogPilotPlannerd:
     longitudinal_tune = self.params.get_bool("LongitudinalTune")
     self.acceleration_profile = self.params.get_int("AccelerationProfile") if longitudinal_tune else 0
     self.deceleration_profile = self.params.get_int("DecelerationProfile") if longitudinal_tune else 0
+    self.aggressive_acceleration = longitudinal_tune and self.params.get_bool("AggressiveAcceleration")
