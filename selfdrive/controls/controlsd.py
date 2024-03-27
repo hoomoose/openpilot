@@ -184,6 +184,7 @@ class Controls:
     self.always_on_lateral_main = self.always_on_lateral and self.params.get_bool("AlwaysOnLateralMain")
     self.always_on_lateral_pause = self.always_on_lateral and self.params.get_bool("PauseAOLOnBrake")
 
+    self.drive_added = False
     self.fcw_random_event_triggered = False
     self.holiday_theme_alerted = False
     self.openpilot_crashed_triggered = False
@@ -193,6 +194,8 @@ class Controls:
     self.stopped_for_light_previously = False
 
     self.crashed_timer = 0
+    self.drive_distance = 0
+    self.drive_time = 0
     self.gap_counter = 0
     self.max_acceleration = 0
     self.previous_lead_distance = 0
@@ -1075,6 +1078,36 @@ class Controls:
 
     if self.frogpilot_variables.conditional_experimental_mode:
       self.experimental_mode = self.sm['frogpilotPlan'].conditionalExperimental
+
+    self.drive_distance += CS.vEgo * DT_CTRL
+    self.drive_time += DT_CTRL
+
+    if self.drive_time > 60 and CS.standstill:
+      current_total_distance = self.params.get_float("FrogPilotKilometers")
+      distance_to_add = self.drive_distance / 1000
+      new_total_distance = current_total_distance + distance_to_add
+
+      self.params.put_float("FrogPilotKilometers", new_total_distance)
+      self.params_storage.put_float("FrogPilotKilometers", new_total_distance)
+
+      self.drive_distance = 0
+
+      current_total_time = self.params.get_float("FrogPilotMinutes")
+      time_to_add = self.drive_time / 60
+      new_total_time = current_total_time + time_to_add
+
+      self.params.put_float("FrogPilotMinutes", new_total_time)
+      self.params_storage.put_float("FrogPilotMinutes", new_total_time)
+
+      self.drive_time = 0
+
+      if self.sm.frame * DT_CTRL > 60 * 5 and not self.drive_added:
+        new_total_drives = self.params.get_int("FrogPilotDrives") + 1
+
+        self.params.put_int("FrogPilotDrives", new_total_drives)
+        self.params_storage.put_int("FrogPilotDrives", new_total_drives)
+
+        self.drive_added = True
 
     if self.random_event_triggered:
       self.random_event_timer += DT_CTRL
