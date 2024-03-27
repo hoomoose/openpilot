@@ -935,6 +935,8 @@ void process_road_camera(MultiCameraState *s, CameraState *c, int cnt) {
 void cameras_run(MultiCameraState *s) {
   // FrogPilot variables
   Params paramsMemory{"/dev/shm/params"};
+  auto startTime = std::chrono::steady_clock::now();
+  int frameCount = 0;
 
   LOG("-- Starting threads");
   std::vector<std::thread> threads;
@@ -977,6 +979,17 @@ void cameras_run(MultiCameraState *s) {
 
         // for debugging
         //do_exit = do_exit || event_data->u.frame_msg.frame_id > (30*20);
+
+        frameCount++;
+
+        auto currentTime = std::chrono::steady_clock::now();
+        if (std::chrono::duration_cast<std::chrono::seconds>(currentTime - startTime).count() >= 1) {
+          double fps = frameCount / (currentTime - startTime).count();
+          paramsMemory.putIntNonBlocking("CameraFPS", fps / 3);
+
+          frameCount = 0;
+          startTime = currentTime;
+        }
 
         if (event_data->session_hdl == s->road_cam.session_handle) {
           s->road_cam.handle_camera_event(event_data);
