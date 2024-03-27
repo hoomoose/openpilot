@@ -256,6 +256,10 @@ static void update_state(UIState *s) {
   }
   if (sm.updated("liveLocationKalman")) {
     auto liveLocationKalman = sm["liveLocationKalman"].getLiveLocationKalman();
+    auto orientation = liveLocationKalman.getCalibratedOrientationNED();
+    if (orientation.getValid()) {
+      scene.bearing_deg = RAD2DEG(orientation.getValue()[2]);
+    }
   }
   if (sm.updated("wideRoadCameraState")) {
     auto cam_state = sm["wideRoadCameraState"].getWideRoadCameraState();
@@ -295,6 +299,7 @@ void ui_update_frogpilot_params(UIState *s) {
   scene.adjacent_path = custom_paths && params.getBool("AdjacentPath");
   scene.adjacent_path_metrics = scene.adjacent_path && params.getBool("AdjacentPathMetrics");
   scene.blind_spot_path = custom_paths && params.getBool("BlindSpotPath");
+  scene.compass = custom_onroad_ui && params.getBool("Compass");
   scene.fps_counter = custom_onroad_ui && params.getBool("FPSCounter");
   scene.lead_info = scene.longitudinal_control && custom_onroad_ui && params.getBool("LeadInfo");
   scene.use_si = scene.lead_info && params.getBool("UseSI");
