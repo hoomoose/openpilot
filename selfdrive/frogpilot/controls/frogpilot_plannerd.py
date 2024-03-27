@@ -97,7 +97,7 @@ class FrogPilotPlannerd:
       self.cem.update(carState, controlsState.enabled, frogpilotNavigation, modelData, radarState, road_curvature, stop_distance, self.t_follow, v_ego)
 
   def update_t_follow(self, controlsState, frogpilotCarControl, radarState, v_ego, v_lead):
-    t_follow = get_T_FOLLOW(controlsState.personality)
+    t_follow = get_T_FOLLOW(self.custom_personalities, self.aggressive_follow, self.standard_follow, self.relaxed_follow, controlsState.personality)
 
     lead_distance = radarState.leadOne.dRel
 
@@ -148,6 +148,11 @@ class FrogPilotPlannerd:
       self.cem.update_frogpilot_params()
 
     custom_alerts = self.params.get_bool("CustomAlerts")
+
+    self.custom_personalities = self.params.get_bool("CustomPersonalities")
+    self.aggressive_follow = self.params.get_float("AggressiveFollow")
+    self.standard_follow = self.params.get_float("StandardFollow")
+    self.relaxed_follow = self.params.get_float("RelaxedFollow")
 
     custom_ui = self.params.get_bool("CustomUI")
     self.blind_spot_path = custom_ui and self.params.get_bool("BlindSpotPath")
