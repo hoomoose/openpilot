@@ -128,6 +128,7 @@ private:
   float currentAcceleration;
 
   int alertSize;
+  int cameraView;
 
 protected:
   void paintGL() override;
