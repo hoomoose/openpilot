@@ -36,7 +36,7 @@ private:
   std::set<QString> deviceManagementKeys = {"DeviceShutdown", "LowVoltageShutdown", "MuteOverheated", "NoLogging", "NoUploads", "OfflineMode"};
   std::set<QString> experimentalModeActivationKeys = {"ExperimentalModeViaDistance", "ExperimentalModeViaLKAS", "ExperimentalModeViaScreen"};
   std::set<QString> laneChangeKeys = {};
-  std::set<QString> lateralTuneKeys = {};
+  std::set<QString> lateralTuneKeys = {"ForceAutoTune"};
   std::set<QString> longitudinalTuneKeys = {"AccelerationProfile", "AggressiveAcceleration", "DecelerationProfile"};
   std::set<QString> mtscKeys = {};
   std::set<QString> qolKeys = {"DisableOnroadUploads"};
