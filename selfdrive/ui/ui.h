@@ -188,6 +188,8 @@ typedef struct UIScene {
   bool fps_counter;
   bool full_map;
   bool hide_lead_marker;
+  bool hide_speed;
+  bool hide_speed_ui;
   bool lead_info;
   bool map_open;
   bool model_ui;

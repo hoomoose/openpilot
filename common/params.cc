@@ -278,6 +278,8 @@ std::unordered_map<std::string, uint32_t> keys = {
     {"HideAOLStatusBar", PERSISTENT},
     {"HideCEMStatusBar", PERSISTENT},
     {"HideLeadMarker", PERSISTENT},
+    {"HideSpeed", PERSISTENT},
+    {"HideSpeedUI", PERSISTENT},
     {"LaneLinesWidth", PERSISTENT},
     {"LateralTune", PERSISTENT},
     {"LeadInfo", PERSISTENT},
