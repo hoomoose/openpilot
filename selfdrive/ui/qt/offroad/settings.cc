@@ -318,6 +318,31 @@ DevicePanel::DevicePanel(SettingsWindow *parent) : ListWidget(parent) {
   });
   addItem(deleteStorageParamsBtn);
 
+  // Panda flashing button
+  auto flashPandaBtn = new ButtonControl(tr("Flash Panda"), tr("FLASH"), tr("Use this button to troubleshoot and update the Panda device's firmware."));
+  connect(flashPandaBtn, &ButtonControl::clicked, [=]() {
+    if (ConfirmationDialog::confirm(tr("Are you sure you want to flash the Panda?"), tr("Flash"), this)) {
+      std::thread([=]() {
+        flashPandaBtn->setValue(tr("Flashing..."));
+
+        QProcess process;
+
+        process.setWorkingDirectory("/data/openpilot/panda/board");
+        process.start("/bin/sh", QStringList{"-c", "./recover.py"});
+        process.waitForFinished();
+        process.start("/bin/sh", QStringList{"-c", "./flash.py"});
+        process.waitForFinished();
+
+        process.setWorkingDirectory("/data/openpilot/panda/tests");
+        process.start("/bin/sh", QStringList{"-c", "python reflash_internal_panda.py"});
+        process.waitForFinished();
+
+        Hardware::reboot();
+      }).detach();
+    }
+  });
+  addItem(flashPandaBtn);
+
   // Backup FrogPilot
   std::vector<QString> frogpilotBackupOptions{tr("Backup"), tr("Delete"), tr("Restore")};
   FrogPilotButtonsControl *frogpilotBackup = new FrogPilotButtonsControl(tr("FrogPilot Backups"), tr("Backup, delete, or restore your FrogPilot backups."), "", frogpilotBackupOptions);
