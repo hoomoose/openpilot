@@ -66,6 +66,7 @@ def frogpilot_thread():
 
     if params_memory.get_bool("FrogPilotTogglesUpdated"):
       automatic_updates = params.get_bool("AutomaticUpdates")
+      frogpilot_functions.backup_toggles()
 
       if started:
         frogpilot_plannerd.update_frogpilot_params()
