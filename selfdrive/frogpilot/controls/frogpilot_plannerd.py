@@ -7,6 +7,7 @@ from openpilot.common.numpy_fast import interp
 from openpilot.common.params import Params
 
 from openpilot.selfdrive.car.interfaces import ACCEL_MIN, ACCEL_MAX
+from openpilot.selfdrive.controls.lib.desire_helper import LANE_CHANGE_SPEED_MIN
 from openpilot.selfdrive.controls.lib.drive_helpers import V_CRUISE_MAX
 from openpilot.selfdrive.controls.lib.longitudinal_mpc_lib.long_mpc import COMFORT_BRAKE, STOP_DISTANCE, get_safe_obstacle_distance, get_stopped_equivalence_factor, get_T_FOLLOW
 from openpilot.selfdrive.controls.lib.longitudinal_planner import A_CRUISE_MIN, get_max_accel
@@ -70,6 +71,14 @@ class FrogPilotPlannerd:
     else:
       self.min_accel = ACCEL_MIN
 
+    check_lane_width = self.blind_spot_path
+    if check_lane_width and v_ego >= LANE_CHANGE_SPEED_MIN:
+      self.lane_width_left = float(calculate_lane_width(modelData.laneLines[0], modelData.laneLines[1], modelData.roadEdges[0]))
+      self.lane_width_right = float(calculate_lane_width(modelData.laneLines[3], modelData.laneLines[2], modelData.roadEdges[1]))
+    else:
+      self.lane_width_left = 0
+      self.lane_width_right = 0
+
     road_curvature = calculate_road_curvature(modelData, v_ego)
 
     stop_distance = STOP_DISTANCE
@@ -114,6 +123,8 @@ class FrogPilotPlannerd:
     frogpilot_plan_send.valid = sm.all_checks(service_list=['carState', 'controlsState'])
     frogpilotPlan = frogpilot_plan_send.frogpilotPlan
 
+    frogpilotPlan.laneWidthLeft = self.lane_width_left
+    frogpilotPlan.laneWidthRight = self.lane_width_right
     frogpilotPlan.minAcceleration = self.min_accel
     frogpilotPlan.maxAcceleration = self.max_accel
     frogpilotPlan.tFollow = float(self.t_follow)
@@ -127,6 +138,7 @@ class FrogPilotPlannerd:
     custom_alerts = self.params.get_bool("CustomAlerts")
 
     custom_ui = self.params.get_bool("CustomUI")
+    self.blind_spot_path = custom_ui and self.params.get_bool("BlindSpotPath")
 
     longitudinal_tune = self.params.get_bool("LongitudinalTune")
     self.acceleration_profile = self.params.get_int("AccelerationProfile") if longitudinal_tune else 0
