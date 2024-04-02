@@ -32,6 +32,8 @@ A_CRUISE_MAX_VALS_SPORT = [3.5, 3.5, 3.3, 2.8, 1.5, 1.0, .75, .6, .38, .2]
 TRAFFIC_MODE_BP = [0., CITY_SPEED_LIMIT]
 TRAFFIC_MODE_T_FOLLOW = [.50, 1.]
 
+TARGET_LAT_A = 1.9  # m/s^2
+
 def get_min_accel_eco(v_ego):
   return interp(v_ego, A_CRUISE_MIN_BP_CUSTOM, A_CRUISE_MIN_VALS_ECO)
 
@@ -60,6 +62,7 @@ class FrogPilotPlannerd:
     self.mtsc_target = 0
     self.slc_target = 0
     self.t_follow = 0
+    self.vtsc_target = 0
 
   def update(self, carState, controlsState, frogpilotCarControl, frogpilotNavigation, liveLocationKalman, modelData, radarState):
     v_cruise_kph = min(controlsState.vCruise, V_CRUISE_MAX)
@@ -76,7 +79,7 @@ class FrogPilotPlannerd:
     else:
       self.max_accel = ACCEL_MAX
 
-    v_cruise_changed = self.mtsc_target < v_cruise
+    v_cruise_changed = (self.mtsc_target or self.vtsc_target) < v_cruise
 
     if self.deceleration_profile == 1 and not v_cruise_changed:
       self.min_accel = get_min_accel_eco(v_ego)
@@ -199,7 +202,21 @@ class FrogPilotPlannerd:
     else:
       self.slc_target = v_cruise
 
-    targets = [self.mtsc_target, max(self.overridden_speed, self.slc_target)]
+    # Pfeiferj's Vision Turn Controller
+    if self.vision_turn_controller and v_ego > CRUISING_SPEED and enabled:
+      orientation_rate = np.array(np.abs(modelData.orientationRate.z)) * self.curve_sensitivity
+      velocity = np.array(modelData.velocity.x)
+
+      max_pred_lat_acc = np.amax(orientation_rate * velocity)
+      max_curve = max_pred_lat_acc / (v_ego**2)
+      adjusted_target_lat_a = TARGET_LAT_A * self.turn_aggressiveness
+
+      self.vtsc_target = (adjusted_target_lat_a / max_curve)**0.5
+      self.vtsc_target = np.clip(self.vtsc_target, CRUISING_SPEED, v_cruise)
+    else:
+      self.vtsc_target = v_cruise
+
+    targets = [self.mtsc_target, max(self.overridden_speed, self.slc_target), self.vtsc_target]
     filtered_targets = [target - v_ego_diff if target > CRUISING_SPEED else v_cruise for target in targets]
 
     return min(filtered_targets)
@@ -209,7 +226,7 @@ class FrogPilotPlannerd:
     frogpilot_plan_send.valid = sm.all_checks(service_list=['carState', 'controlsState'])
     frogpilotPlan = frogpilot_plan_send.frogpilotPlan
 
-    frogpilotPlan.adjustedCruise = float(self.mtsc_target * (CV.MS_TO_KPH if self.is_metric else CV.MS_TO_MPH))
+    frogpilotPlan.adjustedCruise = float(min(self.mtsc_target, self.vtsc_target) * (CV.MS_TO_KPH if self.is_metric else CV.MS_TO_MPH))
     frogpilotPlan.conditionalExperimental = self.cem.experimental_mode
 
     frogpilotPlan.desiredFollowDistance = self.safe_obstacle_distance - self.stopped_equivalence_factor
@@ -231,6 +248,8 @@ class FrogPilotPlannerd:
     frogpilotPlan.slcSpeedLimit = self.slc_target
     frogpilotPlan.slcSpeedLimitOffset = SpeedLimitController.offset
     frogpilotPlan.unconfirmedSlcSpeedLimit = SpeedLimitController.desired_speed_limit
+
+    frogpilotPlan.vtscControllingCurve = bool(self.mtsc_target > self.vtsc_target)
 
     pm.send('frogpilotPlan', frogpilot_plan_send)
 
@@ -272,3 +291,7 @@ class FrogPilotPlannerd:
     self.speed_limit_controller = self.params.get_bool("SpeedLimitController")
     self.speed_limit_confirmation = self.speed_limit_controller and self.params.get_bool("SLCConfirmation")
     self.speed_limit_controller_override = self.speed_limit_controller and self.params.get_int("SLCOverride")
+
+    self.vision_turn_controller = self.params.get_bool("VisionTurnControl")
+    self.curve_sensitivity = self.params.get_int("CurveSensitivity") / 100 if self.vision_turn_controller else 1
+    self.turn_aggressiveness = self.params.get_int("TurnAggressiveness") / 100 if self.vision_turn_controller else 1

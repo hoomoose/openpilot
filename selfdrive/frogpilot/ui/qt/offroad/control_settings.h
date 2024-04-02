@@ -48,7 +48,7 @@ private:
   std::set<QString> speedLimitControllerControlsKeys = {"Offset1", "Offset2", "Offset3", "Offset4", "SLCFallback", "SLCOverride", "SLCPriority"};
   std::set<QString> speedLimitControllerQOLKeys = {"ForceMPHDashboard", "SLCConfirmation", "SetSpeedLimit"};
   std::set<QString> speedLimitControllerVisualsKeys = {"ShowSLCOffset", "UseVienna"};
-  std::set<QString> visionTurnControlKeys = {};
+  std::set<QString> visionTurnControlKeys = {"CurveSensitivity", "DisableVTSCSmoothing", "TurnAggressiveness"};
 
   std::map<std::string, ParamControl*> toggles;
 

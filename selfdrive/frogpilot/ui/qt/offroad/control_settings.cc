@@ -140,6 +140,11 @@ FrogPilotControlsPanel::FrogPilotControlsPanel(SettingsWindow *parent) : FrogPil
     {"SLCVisuals", tr("Visuals Settings"), tr("Manage toggles related to 'Speed Limit Controller's visuals."), ""},
     {"ShowSLCOffset", tr("Show Speed Limit Offset"), tr("Show the speed limit offset separated from the speed limit in the onroad UI when using 'Speed Limit Controller'."), ""},
     {"UseVienna", tr("Use Vienna Speed Limit Signs"), tr("Use the Vienna (EU) speed limit style signs as opposed to MUTCD (US)."), ""},
+
+    {"VisionTurnControl", tr("Vision Turn Speed Controller"), tr("Slow down for detected curves in the road."), "../frogpilot/assets/toggle_icons/icon_vtc.png"},
+    {"DisableVTSCSmoothing", tr("Disable VTSC UI Smoothing"), tr("Disables the smoothing for the requested speed in the onroad UI."), ""},
+    {"CurveSensitivity", tr("Curve Detection Sensitivity"), tr("Set curve detection sensitivity. Higher values prompt earlier responses, lower values lead to smoother but later reactions."), ""},
+    {"TurnAggressiveness", tr("Turn Speed Aggressiveness"), tr("Set turn speed aggressiveness. Higher values result in faster turns, lower values yield gentler turns."), ""},
   };
 
   for (const auto &[param, title, desc, icon] : controlToggles) {
@@ -629,6 +634,18 @@ FrogPilotControlsPanel::FrogPilotControlsPanel(SettingsWindow *parent) : FrogPil
       slcPriorityButton->setValue(initialPriorities.join(", "));
       addItem(slcPriorityButton);
 
+    } else if (param == "VisionTurnControl") {
+      FrogPilotParamManageControl *visionTurnControlToggle = new FrogPilotParamManageControl(param, title, desc, icon, this);
+      QObject::connect(visionTurnControlToggle, &FrogPilotParamManageControl::manageButtonClicked, this, [this]() {
+        openParentToggle();
+        for (auto &[key, toggle] : toggles) {
+          toggle->setVisible(visionTurnControlKeys.find(key.c_str()) != visionTurnControlKeys.end());
+        }
+      });
+      toggle = visionTurnControlToggle;
+    } else if (param == "CurveSensitivity" || param == "TurnAggressiveness") {
+      toggle = new FrogPilotParamValueControl(param, title, desc, icon, 1, 200, std::map<int, QString>(), this, false, "%");
+
     } else {
       toggle = new ParamControl(param, title, desc, icon, this);
     }
@@ -887,7 +904,7 @@ void FrogPilotControlsPanel::hideToggles() {
   relaxedProfile->setVisible(false);
 
   std::set<QString> longitudinalKeys = {"ConditionalExperimental", "CustomPersonalities", "ExperimentalModeActivation",
-                                        "LongitudinalTune", "MTSCEnabled", "SpeedLimitController"};
+                                        "LongitudinalTune", "MTSCEnabled", "SpeedLimitController", "VisionTurnControl"};
 
   for (auto &[key, toggle] : toggles) {
     toggle->setVisible(false);
