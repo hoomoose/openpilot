@@ -109,8 +109,8 @@ FrogPilotVisualsPanel::FrogPilotVisualsPanel(SettingsWindow *parent) : FrogPilot
       });
       toggle = customUIToggle;
     } else if (param == "CustomPaths") {
-      std::vector<QString> pathToggles{"AccelerationPath", "BlindSpotPath"};
-      std::vector<QString> pathToggleNames{tr("Acceleration"), tr("Blind Spot")};
+      std::vector<QString> pathToggles{"AccelerationPath", "AdjacentPath", "BlindSpotPath", "AdjacentPathMetrics"};
+      std::vector<QString> pathToggleNames{tr("Acceleration"), tr("Adjacent"), tr("Blind Spot"), tr("Metrics")};
       toggle = new FrogPilotParamToggleControl(param, title, desc, icon, pathToggles, pathToggleNames);
     } else if (param == "LeadInfo") {
       std::vector<QString> leadInfoToggles{"UseSI"};

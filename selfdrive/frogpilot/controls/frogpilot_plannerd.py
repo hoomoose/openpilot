@@ -74,7 +74,7 @@ class FrogPilotPlannerd:
     else:
       self.min_accel = ACCEL_MIN
 
-    check_lane_width = self.blind_spot_path
+    check_lane_width = self.adjacent_lanes or self.blind_spot_path
     if check_lane_width and v_ego >= LANE_CHANGE_SPEED_MIN:
       self.lane_width_left = float(calculate_lane_width(modelData.laneLines[0], modelData.laneLines[1], modelData.roadEdges[0]))
       self.lane_width_right = float(calculate_lane_width(modelData.laneLines[3], modelData.laneLines[2], modelData.roadEdges[1]))
@@ -170,6 +170,7 @@ class FrogPilotPlannerd:
     self.relaxed_follow = self.params.get_float("RelaxedFollow")
 
     custom_ui = self.params.get_bool("CustomUI")
+    self.adjacent_lanes = custom_ui and self.params.get_bool("AdjacentPath")
     self.blind_spot_path = custom_ui and self.params.get_bool("BlindSpotPath")
 
     longitudinal_tune = self.params.get_bool("LongitudinalTune")

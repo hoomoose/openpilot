@@ -135,6 +135,8 @@ private:
 
   float currentAcceleration;
   float distanceConversion;
+  float laneWidthLeft;
+  float laneWidthRight;
   float speedConversion;
 
   int alertSize;
