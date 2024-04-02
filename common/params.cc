@@ -363,6 +363,7 @@ std::unordered_map<std::string, uint32_t> keys = {
     {"ScreenBrightness", PERSISTENT},
     {"ScreenBrightnessOnroad", PERSISTENT},
     {"ScreenManagement", PERSISTENT},
+    {"ScreenRecorder", PERSISTENT},
     {"ScreenTimeout", PERSISTENT},
     {"ScreenTimeoutOnroad", PERSISTENT},
     {"SearchInput", PERSISTENT},
