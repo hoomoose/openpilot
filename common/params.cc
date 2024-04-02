@@ -261,6 +261,7 @@ std::unordered_map<std::string, uint32_t> keys = {
     {"HideLeadMarker", PERSISTENT},
     {"LaneLinesWidth", PERSISTENT},
     {"LateralTune", PERSISTENT},
+    {"LeadInfo", PERSISTENT},
     {"LongitudinalTune", PERSISTENT},
     {"LowVoltageShutdown", PERSISTENT},
     {"ManualUpdateInitiated", PERSISTENT},
@@ -289,6 +290,7 @@ std::unordered_map<std::string, uint32_t> keys = {
     {"StandardJerk", PERSISTENT},
     {"StockTune", PERSISTENT},
     {"UnlimitedLength", PERSISTENT},
+    {"UseSI", PERSISTENT},
     {"WarningImmediateVolume", PERSISTENT},
     {"WarningSoftVolume", PERSISTENT},
 };
