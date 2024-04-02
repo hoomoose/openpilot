@@ -113,6 +113,7 @@ FrogPilotControlsPanel::FrogPilotControlsPanel(SettingsWindow *parent) : FrogPil
     {"CustomCruise", tr("Cruise Increase Interval"), tr("Set a custom interval to increase the max set speed by."), ""},
     {"DisableOnroadUploads", tr("Disable Onroad Uploads"), tr("Prevent uploads to comma connect unless you're offroad and connected to Wi-Fi."), ""},
     {"HigherBitrate", tr("Higher Bitrate Recording"), tr("Increases the quality of the footage uploaded to comma connect."), ""},
+    {"OnroadDistanceButton", tr("Onroad Distance Button"), tr("Simulate a distance button via the onroad UI to control personalities, 'Experimental Mode', and 'Traffic Mode'."), ""},
     {"ReverseCruise", tr("Reverse Cruise Increase"), tr("Reverses the 'long press' functionality logic to increase the max set speed by 5 instead of 1. Useful to increase the max speed quickly."), ""},
   };
 
@@ -434,6 +435,10 @@ FrogPilotControlsPanel::FrogPilotControlsPanel(SettingsWindow *parent) : FrogPil
         for (auto &[key, toggle] : toggles) {
           std::set<QString> modifiedQolKeys = qolKeys;
 
+          if (!hasOpenpilotLongitudinal) {
+            modifiedQolKeys.erase("OnroadDistanceButton");
+          }
+
           if (!hasPCMCruise) {
             modifiedQolKeys.erase("ReverseCruise");
           } else {
@@ -446,6 +451,10 @@ FrogPilotControlsPanel::FrogPilotControlsPanel(SettingsWindow *parent) : FrogPil
       toggle = qolToggle;
     } else if (param == "CustomCruise") {
       toggle = new FrogPilotParamValueControl(param, title, desc, icon, 1, 99, std::map<int, QString>(), this, false, tr(" mph"));
+    } else if (param == "OnroadDistanceButton") {
+      std::vector<QString> onroadDistanceToggles{"KaofuiIcons"};
+      std::vector<QString> onroadDistanceToggleNames{tr("Use Kaofui's Distance Icons")};
+      toggle = new FrogPilotParamToggleControl(param, title, desc, icon, onroadDistanceToggles, onroadDistanceToggleNames);
     } else if (param == "ReverseCruise") {
       std::vector<QString> reverseCruiseToggles{"ReverseCruiseUI"};
       std::vector<QString> reverseCruiseNames{tr("Control Via UI")};

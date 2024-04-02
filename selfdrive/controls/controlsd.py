@@ -689,7 +689,7 @@ class Controls:
 
     # decrement personality on distance button press
     if self.CP.openpilotLongitudinalControl:
-      if any(not be.pressed and be.type == ButtonType.gapAdjustCruise for be in CS.buttonEvents):
+      if any(not be.pressed and be.type == ButtonType.gapAdjustCruise for be in CS.buttonEvents) or self.params_memory.get_bool("OnroadDistanceButtonPressed"):
         self.gap_counter += 1
 
       if self.gap_counter == CRUISE_LONG_PRESS and self.experimental_mode_via_distance:
