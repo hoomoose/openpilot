@@ -120,6 +120,7 @@ struct CarEvent @0x9b1657f34caf3ad3 {
     # FrogPilot events
     goatSteerSaturated @124;
     greenLight @125;
+    holidayActive @126;
 
     radarCanErrorDEPRECATED @15;
     communityFeatureDisallowedDEPRECATED @62;

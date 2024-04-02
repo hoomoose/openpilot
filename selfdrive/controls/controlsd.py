@@ -181,6 +181,7 @@ class Controls:
     self.always_on_lateral_main = self.always_on_lateral and self.params.get_bool("AlwaysOnLateralMain")
     self.always_on_lateral_pause = self.always_on_lateral and self.params.get_bool("PauseAOLOnBrake")
 
+    self.holiday_theme_alerted = False
     self.stopped_for_light_previously = False
 
     self.gap_counter = 0
@@ -916,6 +917,10 @@ class Controls:
         if green_light:
           self.events.add(EventName.greenLight)
 
+    if self.sm.frame >= 1000 and self.holiday_themes and self.params_memory.get_int("CurrentHolidayTheme") != 0 and not self.holiday_theme_alerted:
+      self.events.add(EventName.holidayActive)
+      self.holiday_theme_alerted = True
+
   def update_frogpilot_variables(self, CS):
     frogpilot_plan = self.sm['frogpilotPlan']
 
@@ -951,6 +956,7 @@ class Controls:
     custom_sounds = self.params.get_int("CustomSounds") if custom_theme else 0
     frog_sounds = custom_sounds == 1
     self.goat_scream = frog_sounds and self.params.get_bool("GoatScream")
+    self.holiday_themes = custom_theme and self.params.get_bool("HolidayThemes")
 
     experimental_mode_activation = self.params.get_bool("ExperimentalModeActivation")
     self.experimental_mode_via_distance = experimental_mode_activation and self.params.get_bool("ExperimentalModeViaDistance")

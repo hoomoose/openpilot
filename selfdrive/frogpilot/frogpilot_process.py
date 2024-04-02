@@ -12,6 +12,7 @@ from openpilot.system.hardware import HARDWARE
 
 from openpilot.selfdrive.frogpilot.controls.frogpilot_plannerd import FrogPilotPlannerd
 from openpilot.selfdrive.frogpilot.controls.lib.frogpilot_functions import FrogPilotFunctions
+from openpilot.selfdrive.frogpilot.controls.lib.theme_manager import ThemeManager
 
 ETHERNET = log.DeviceState.NetworkType.ethernet
 WIFI = log.DeviceState.NetworkType.wifi
@@ -32,6 +33,7 @@ def frogpilot_thread():
   params_memory = Params("/dev/shm/params")
 
   frogpilot_functions = FrogPilotFunctions()
+  theme_manager = ThemeManager()
 
   CP = None
 
@@ -86,6 +88,7 @@ def frogpilot_thread():
         if automatic_updates:
           automatic_update_check(params)
 
+      theme_manager.update_holiday()
       first_run = False
 
     time.sleep(DT_MDL)
