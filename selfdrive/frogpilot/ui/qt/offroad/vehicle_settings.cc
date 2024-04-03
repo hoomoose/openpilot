@@ -117,6 +117,7 @@ FrogPilotVehiclesPanel::FrogPilotVehiclesPanel(SettingsWindow *parent) : FrogPil
 
     {"LockDoors", tr("Lock Doors In Drive"), tr("Automatically lock the doors when in drive and unlock when in park."), ""},
     {"LongitudinalTune", tr("Longitudinal Tune"), tr("Use a custom Toyota longitudinal tune.\n\nCydia = More focused on TSS-P vehicles but works for all Toyotas\n\nDragonPilot = Focused on TSS2 vehicles\n\nFrogPilot = Takes the best of both worlds with some personal tweaks focused around FrogsGoMoo's 2019 Lexus ES 350"), ""},
+    {"SNGHack", tr("Stop and Go Hack"), tr("Enable the 'Stop and Go' hack for vehicles without stock stop and go functionality."), ""},
   };
 
   for (const auto &[param, title, desc, icon] : vehicleToggles) {
@@ -235,7 +236,7 @@ void FrogPilotVehiclesPanel::hideToggles() {
   bool subaru = carMake == "Subaru";
   bool toyota = carMake == "Lexus" || carMake == "Toyota";
 
-  std::set<QString> longitudinalKeys = {"GasRegenCmd", "LongitudinalTune", "LongPitch"};
+  std::set<QString> longitudinalKeys = {"GasRegenCmd", "LongitudinalTune", "LongPitch", "SNGHack"};
 
   for (auto &[key, toggle] : toggles) {
     if (toggle) {
