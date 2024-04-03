@@ -16,12 +16,19 @@ public:
 
 private:
   void hideToggles();
+  void setModels();
   void showEvent(QShowEvent *event);
   void updateCarToggles();
   void updateState(const UIState &s);
   void updateToggles();
 
+  ButtonControl *selectMakeButton;
+  ButtonControl *selectModelButton;
+
   ParamControl *disableOpenpilotLong;
+
+  QString carMake;
+  QStringList models;
 
   std::set<QString> gmKeys = {};
   std::set<QString> subaruKeys = {};
