@@ -294,9 +294,15 @@ def thermald_thread(end_event, hw_queue) -> None:
       elif current_band.max_temp is not None and all_comp_temp > current_band.max_temp:
         thermal_status = list(THERMAL_BANDS.keys())[band_idx + 1]
 
-    # **** starting logic ****
+    device_management = params.get_bool("DeviceManagement")
 
-    startup_conditions["up_to_date"] = params.get("Offroad_ConnectivityNeeded") is None or params.get_bool("DisableUpdates") or params.get_bool("SnoozeUpdate")
+    if device_management and params.get_bool("MuteOverheated"):
+      thermal_status = ThermalStatus.green
+
+    # **** starting logic ****
+    offline_mode = device_management and params.get_bool("OfflineMode")
+
+    startup_conditions["up_to_date"] = params.get("Offroad_ConnectivityNeeded") is None or params.get_bool("DisableUpdates") or params.get_bool("SnoozeUpdate") or offline_mode
     startup_conditions["not_uninstalling"] = not params.get_bool("DoUninstall")
     startup_conditions["accepted_terms"] = params.get("HasAcceptedTerms") == terms_version
 
