@@ -102,6 +102,9 @@ private:
   Params paramsMemory{"/dev/shm/params"};
   UIScene &scene;
 
+  bool rotatingWheel;
+
+  int steeringAngleDeg;
   int y_offset;
 };
 
