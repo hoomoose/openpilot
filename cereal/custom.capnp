@@ -18,6 +18,8 @@ struct FrogPilotNavigation @0xf35cc4560bbf6ec2 {
 }
 
 struct FrogPilotPlan @0xda96579883444c35 {
+  minAcceleration @5 :Float32;
+  maxAcceleration @6 :Float32;
   tFollow @16 :Float32;
   vCruise @17 :Float32;
 }
