@@ -25,7 +25,7 @@ private:
   void updateState(const UIState &s);
   void updateToggles();
 
-  std::set<QString> aolKeys = {};
+  std::set<QString> aolKeys = {"AlwaysOnLateralMain", "HideAOLStatusBar", "PauseAOLOnBrake"};
   std::set<QString> conditionalExperimentalKeys = {};
   std::set<QString> deviceManagementKeys = {};
   std::set<QString> experimentalModeActivationKeys = {};
