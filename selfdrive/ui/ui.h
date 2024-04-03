@@ -196,7 +196,10 @@ typedef struct UIScene {
   bool fahrenheit;
   bool fps_counter;
   bool full_map;
+  bool hide_alerts;
   bool hide_lead_marker;
+  bool hide_map_icon;
+  bool hide_max_speed;
   bool hide_speed;
   bool hide_speed_ui;
   bool holiday_themes;
@@ -216,6 +219,7 @@ typedef struct UIScene {
   bool show_aol_status_bar;
   bool show_cem_status_bar;
   bool show_driver_camera;
+  bool standby_mode;
   bool standstill;
   bool tethering_enabled;
   bool turn_signal_left;
@@ -223,6 +227,7 @@ typedef struct UIScene {
   bool unlimited_road_ui_length;
   bool use_kaofui_icons;
   bool use_si;
+  bool wake_up_screen;
 
   float acceleration;
   float adjusted_cruise;
@@ -247,6 +252,10 @@ typedef struct UIScene {
   int desired_follow;
   int obstacle_distance;
   int obstacle_distance_stock;
+  int screen_brightness;
+  int screen_brightness_onroad;
+  int screen_timeout;
+  int screen_timeout_onroad;
   int steering_angle_deg;
   int stopped_equivalence;
 
@@ -333,7 +342,7 @@ signals:
   void interactiveTimeout();
 
 public slots:
-  void resetInteractiveTimeout(int timeout = -1);
+  void resetInteractiveTimeout(int timeout = -1, int timeout_onroad = -1);
   void update(const UIState &s);
 };
 
