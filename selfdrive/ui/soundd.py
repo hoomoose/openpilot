@@ -39,6 +39,9 @@ sound_list: dict[int, tuple[str, int | None, float]] = {
 
   AudibleAlert.warningSoft: ("warning_soft.wav", None, MAX_VOLUME),
   AudibleAlert.warningImmediate: ("warning_immediate.wav", None, MAX_VOLUME),
+
+  # Other
+  AudibleAlert.goat: ("goat.wav", None, MAX_VOLUME),
 }
 
 def check_controls_timeout_alert(sm):
@@ -72,9 +75,15 @@ class Soundd:
 
     # Load all sounds
     for sound in sound_list:
+      if sound == AudibleAlert.goat and not self.goat_scream:
+        continue
+
       filename, play_count, volume = sound_list[sound]
 
-      wavefile = wave.open(BASEDIR + "/selfdrive/assets/sounds/" + filename, 'r')
+      try:
+        wavefile = wave.open(self.sound_directory + filename, 'r')
+      except FileNotFoundError:
+        wavefile = wave.open(BASEDIR + "/selfdrive/assets/sounds/" + filename, 'r')
 
       assert wavefile.getnchannels() == 1
       assert wavefile.getsampwidth() == 2
@@ -181,7 +190,22 @@ class Soundd:
 
       AudibleAlert.warningSoft: self.params.get_int("WarningSoftVolume"),
       AudibleAlert.warningImmediate: self.params.get_int("WarningImmediateVolume"),
+
+      AudibleAlert.goat: self.params.get_int("PromptVolume"),
     }
+
+    custom_theme = self.params.get_bool("CustomTheme")
+    custom_sounds = self.params.get_int("CustomSounds") if custom_theme else 0
+    self.goat_scream = custom_sounds == 1 and self.params.get_bool("GoatScream")
+
+    theme_configuration = {
+      1: "frog_theme",
+      2: "tesla_theme",
+      3: "stalin_theme"
+    }
+
+    theme_name = theme_configuration.get(custom_sounds)
+    self.sound_directory = BASEDIR + ("/selfdrive/frogpilot/assets/custom_themes/" + theme_name + "/sounds/" if custom_sounds != 0 else "/selfdrive/assets/sounds/")
 
     self.load_sounds()
 

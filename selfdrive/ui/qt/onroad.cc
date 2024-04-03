@@ -323,7 +323,7 @@ void AnnotatedCameraWidget::updateState(const UIState &s) {
   has_eu_speed_limit = (nav_alive && speed_limit_sign == cereal::NavInstruction::SpeedLimitSign::VIENNA);
   is_metric = s.scene.is_metric;
   speedUnit =  s.scene.is_metric ? tr("km/h") : tr("mph");
-  hideBottomIcons = (cs.getAlertSize() != cereal::ControlsState::AlertSize::NONE);
+  hideBottomIcons = (cs.getAlertSize() != cereal::ControlsState::AlertSize::NONE || customSignals != 0 && (turnSignalLeft || turnSignalRight));
   status = s.status;
 
   // update engageability/experimental mode button
@@ -490,19 +490,27 @@ void AnnotatedCameraWidget::drawLaneLines(QPainter &painter, const UIState *s) {
 
   // lanelines
   for (int i = 0; i < std::size(scene.lane_line_vertices); ++i) {
-    painter.setBrush(QColor::fromRgbF(1.0, 1.0, 1.0, std::clamp<float>(scene.lane_line_probs[i], 0.0, 0.7)));
+    if (customColors != 0) {
+      painter.setBrush(std::get<2>(themeConfiguration[customColors]).begin()->second);
+    } else {
+      painter.setBrush(QColor::fromRgbF(1.0, 1.0, 1.0, std::clamp<float>(scene.lane_line_probs[i], 0.0, 0.7)));
+    }
     painter.drawPolygon(scene.lane_line_vertices[i]);
   }
 
   // road edges
   for (int i = 0; i < std::size(scene.road_edge_vertices); ++i) {
-    painter.setBrush(QColor::fromRgbF(1.0, 0, 0, std::clamp<float>(1.0 - scene.road_edge_stds[i], 0.0, 1.0)));
+    if (customColors != 0) {
+      painter.setBrush(std::get<2>(themeConfiguration[customColors]).begin()->second);
+    } else {
+      painter.setBrush(QColor::fromRgbF(1.0, 0, 0, std::clamp<float>(1.0 - scene.road_edge_stds[i], 0.0, 1.0)));
+    }
     painter.drawPolygon(scene.road_edge_vertices[i]);
   }
 
   // paint path
   QLinearGradient bg(0, height(), 0, 0);
-  if (experimentalMode || scene.acceleration_path) {
+  if ((experimentalMode || scene.acceleration_path) && !(customColors != 0 && abs(currentAcceleration) < 0.25)) {
     // The first half of track_vertices are the points for the right side of the path
     // and the indices match the positions of accel from uiPlan
     const auto &acceleration = sm["uiPlan"].getUiPlan().getAccel();
@@ -527,6 +535,12 @@ void AnnotatedCameraWidget::drawLaneLines(QPainter &painter, const UIState *s) {
 
       // Skip a point, unless next is last
       i += (i + 2) < max_len ? 1 : 0;
+    }
+
+  } else if (customColors != 0) {
+    const auto &colorMap = std::get<2>(themeConfiguration[customColors]);
+    for (const auto &[position, brush] : colorMap) {
+      bg.setColorAt(position, brush.color());
     }
 
   } else {
@@ -600,8 +614,8 @@ void AnnotatedCameraWidget::drawDriverState(QPainter &painter, const UIState *s)
 void AnnotatedCameraWidget::drawLead(QPainter &painter, const cereal::RadarState::LeadData::Reader &lead_data, const QPointF &vd) {
   painter.save();
 
-  const float speedBuff = 10.;
-  const float leadBuff = 40.;
+  const float speedBuff = customColors != 0 ? 25. : 10.;  // Make the center of the chevron appear sooner if a custom theme is active
+  const float leadBuff = customColors != 0 ? 100. : 40.;  // Make the center of the chevron appear sooner if a custom theme is active
   const float d_rel = lead_data.getDRel();
   const float v_rel = lead_data.getVRel();
 
@@ -627,7 +641,11 @@ void AnnotatedCameraWidget::drawLead(QPainter &painter, const cereal::RadarState
 
   // chevron
   QPointF chevron[] = {{x + (sz * 1.25), y + sz}, {x, y}, {x - (sz * 1.25), y + sz}};
-  painter.setBrush(redColor(fillAlpha));
+  if (customColors != 0) {
+    painter.setBrush(std::get<2>(themeConfiguration[customColors]).begin()->second);
+  } else {
+    painter.setBrush(redColor(fillAlpha));
+  }
   painter.drawPolygon(chevron, std::size(chevron));
 
   painter.restore();
@@ -747,6 +765,23 @@ void AnnotatedCameraWidget::initializeFrogPilotWidgets() {
   bottom_layout->addWidget(map_settings_btn_bottom);
 
   main_layout->addLayout(bottom_layout);
+
+  themeConfiguration = {
+    {1, {"frog_theme", QColor(23, 134, 68, 242), {{0.0, QBrush(QColor::fromHslF(144 / 360., 0.71, 0.31, 0.9))},
+                                                  {0.5, QBrush(QColor::fromHslF(144 / 360., 0.71, 0.31, 0.5))},
+                                                  {1.0, QBrush(QColor::fromHslF(144 / 360., 0.71, 0.31, 0.1))}}}},
+    {2, {"tesla_theme", QColor(0, 72, 255, 255), {{0.0, QBrush(QColor::fromHslF(223 / 360., 1.0, 0.5, 0.9))},
+                                                  {0.5, QBrush(QColor::fromHslF(223 / 360., 1.0, 0.5, 0.5))},
+                                                  {1.0, QBrush(QColor::fromHslF(223 / 360., 1.0, 0.5, 0.1))}}}},
+    {3, {"stalin_theme", QColor(255, 0, 0, 255), {{0.0, QBrush(QColor::fromHslF(0 / 360., 1.0, 0.5, 0.9))},
+                                                  {0.5, QBrush(QColor::fromHslF(0 / 360., 1.0, 0.5, 0.5))},
+                                                  {1.0, QBrush(QColor::fromHslF(0 / 360., 1.0, 0.5, 0.1))}}}},
+  };
+
+  animationTimer = new QTimer(this);
+  connect(animationTimer, &QTimer::timeout, this, [this] {
+    animationFrameIndex = (animationFrameIndex + 1) % totalFrames;
+  });
 }
 
 void AnnotatedCameraWidget::updateFrogPilotWidgets() {
@@ -767,14 +802,58 @@ void AnnotatedCameraWidget::updateFrogPilotWidgets() {
 
   currentAcceleration = scene.acceleration;
 
+  customColors = scene.custom_colors;
+
   experimentalMode = scene.experimental_mode;
 
   mapOpen = scene.map_open;
+
+  turnSignalLeft = scene.turn_signal_left;
+  turnSignalRight = scene.turn_signal_right;
+
+  if (customSignals != scene.custom_signals) {
+    customSignals = scene.custom_signals;
+
+    QString themePath;
+
+    themePath = QString("../frogpilot/assets/custom_themes/%1/images").arg(
+      themeConfiguration.find(customSignals) != themeConfiguration.end() ?
+      std::get<0>(themeConfiguration[customSignals]) : "");
+
+    const QStringList imagePaths = {
+      themePath + "/turn_signal_1.png",
+      themePath + "/turn_signal_2.png",
+      themePath + "/turn_signal_3.png",
+      themePath + "/turn_signal_4.png"
+    };
+
+    signalImgVector.clear();
+    signalImgVector.reserve(2 * imagePaths.size() + 2);
+
+    for (const QString &imagePath : imagePaths) {
+      QPixmap pixmap(imagePath);
+      signalImgVector.push_back(pixmap);
+      signalImgVector.push_back(pixmap.transformed(QTransform().scale(-1, 1)));
+    }
+
+    const QPixmap blindSpotPixmap(themePath + "/turn_signal_1_red.png");
+    signalImgVector.push_back(blindSpotPixmap);
+    signalImgVector.push_back(blindSpotPixmap.transformed(QTransform().scale(-1, 1)));
+  }
 }
 
 void AnnotatedCameraWidget::paintFrogPilotWidgets(QPainter &p) {
   if (showAlwaysOnLateralStatusBar || showConditionalExperimentalStatusBar) {
     drawStatusBar(p);
+  }
+
+  if (customSignals != 0 && (turnSignalLeft || turnSignalRight)) {
+    if (!animationTimer->isActive()) {
+      animationTimer->start(totalFrames * 11);  // 440 milliseconds per loop; syncs up perfectly with my 2019 Lexus ES 350 turn signal clicks
+    }
+    drawTurnSignals(p);
+  } else if (animationTimer->isActive()) {
+    animationTimer->stop();
   }
 
   map_settings_btn_bottom->setEnabled(map_settings_btn->isEnabled());
@@ -853,4 +932,29 @@ void AnnotatedCameraWidget::drawStatusBar(QPainter &p) {
   p.drawText(textRect, Qt::AlignCenter | Qt::TextWordWrap, newStatus);
 
   p.restore();
+}
+
+void AnnotatedCameraWidget::drawTurnSignals(QPainter &p) {
+  constexpr int signalHeight = 480;
+  constexpr int signalWidth = 360;
+
+  p.setRenderHint(QPainter::Antialiasing);
+
+  int baseYPosition = (height() - signalHeight) / 2 + (showAlwaysOnLateralStatusBar || showConditionalExperimentalStatusBar ? 225 : 300) - alertSize;
+  int leftSignalXPosition = 75 + width() - signalWidth - 300 * (blindSpotLeft ? 0 : animationFrameIndex);
+  int rightSignalXPosition = -75 + 300 * (blindSpotRight ? 0 : animationFrameIndex);
+
+  if (animationFrameIndex < signalImgVector.size()) {
+    auto drawSignal = [&](bool signalActivated, int xPosition, bool flip, bool blindspot) {
+      if (signalActivated) {
+        int uniqueImages = signalImgVector.size() / 4;
+        int index = (blindspot ? 2 * uniqueImages : 2 * animationFrameIndex % totalFrames) + (flip ? 1 : 0);
+        QPixmap &signal = signalImgVector[index];
+        p.drawPixmap(xPosition, baseYPosition, signalWidth, signalHeight, signal);
+      }
+    };
+
+    drawSignal(turnSignalLeft, leftSignalXPosition, false, blindSpotLeft);
+    drawSignal(turnSignalRight, rightSignalXPosition, true, blindSpotRight);
+  }
 }
