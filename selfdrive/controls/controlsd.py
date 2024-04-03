@@ -184,15 +184,20 @@ class Controls:
     self.always_on_lateral_main = self.always_on_lateral and self.params.get_bool("AlwaysOnLateralMain")
     self.always_on_lateral_pause = self.always_on_lateral and self.params.get_bool("PauseAOLOnBrake")
 
+    self.fcw_random_event_triggered = False
     self.holiday_theme_alerted = False
+    self.openpilot_crashed_triggered = False
+    self.random_event_triggered = False
     self.signal_check = False
     self.speed_check = False
     self.stopped_for_light_previously = False
 
     self.crashed_timer = 0
     self.gap_counter = 0
+    self.max_acceleration = 0
     self.previous_lead_distance = 0
     self.previous_speed_limit = 0
+    self.random_event_timer = 0
     self.speed_limit_timer = 0
 
     self.update_frogpilot_params()
@@ -409,6 +414,11 @@ class Controls:
     planner_fcw = self.sm['longitudinalPlan'].fcw and self.enabled
     if planner_fcw or model_fcw:
       self.events.add(EventName.fcw)
+      self.fcw_random_event_triggered = True
+    elif self.fcw_random_event_triggered and self.random_events:
+      self.events.add(EventName.yourFrogTriedToKillMe)
+      self.fcw_random_event_triggered = False
+      self.random_event_triggered = True
 
     for m in messaging.drain_sock(self.log_sock, wait_for_one=False):
       try:
@@ -666,8 +676,13 @@ class Controls:
         turning = abs(lac_log.desiredLateralAccel) > 1.0
         good_speed = CS.vEgo > 5
         max_torque = abs(actuators.steer) > 0.99
-        if undershooting and turning and good_speed and max_torque:
-          lac_log.active and self.events.add(EventName.goatSteerSaturated if self.goat_scream else EventName.steerSaturated)
+        if undershooting and turning and good_speed and max_torque and not self.random_event_triggered:
+          if self.sm.frame % 10000 == 0 and self.random_events:
+            lac_log.active and self.events.add(EventName.firefoxSteerSaturated)
+            self.params_memory.put_int("CurrentRandomEvent", 1)
+            self.random_event_triggered = True
+          else:
+            lac_log.active and self.events.add(EventName.goatSteerSaturated if self.goat_scream else EventName.steerSaturated)
       elif lac_log.saturated:
         # TODO probably should not use dpath_points but curvature
         dpath_points = model_v2.position.y
@@ -922,6 +937,32 @@ class Controls:
       t.join()
 
   def update_frogpilot_events(self, CS):
+    if self.random_events and self.sm.frame % 20 == 0:
+      acceleration = CS.aEgo
+
+      if not CS.gasPressed:
+        self.max_acceleration = max(acceleration, self.max_acceleration)
+      else:
+        self.max_acceleration = 0
+
+      if 3.5 > self.max_acceleration >= 3.0 and acceleration < 1.5:
+        self.events.add(EventName.accel30)
+        self.params_memory.put_int("CurrentRandomEvent", 2)
+        self.random_event_triggered = True
+        self.max_acceleration = 0
+
+      elif 4.0 > self.max_acceleration >= 3.5 and acceleration < 1.5:
+        self.events.add(EventName.accel35)
+        self.params_memory.put_int("CurrentRandomEvent", 3)
+        self.random_event_triggered = True
+        self.max_acceleration = 0
+
+      elif self.max_acceleration >= 4.0 and acceleration < 1.5:
+        self.events.add(EventName.accel40)
+        self.params_memory.put_int("CurrentRandomEvent", 4)
+        self.random_event_triggered = True
+        self.max_acceleration = 0
+
     if self.green_light_alert:
       stopped_for_light = self.sm['frogpilotPlan'].redLight and CS.standstill
       green_light = not stopped_for_light and self.stopped_for_light_previously
@@ -956,6 +997,12 @@ class Controls:
 
     if os.path.isfile(os.path.join(sentry.CRASHES_DIR, 'error.txt')) and self.crashed_timer < 10:
       self.events.add(EventName.openpilotCrashed)
+      self.crashed_timer += DT_CTRL
+
+      if self.random_events and not self.openpilot_crashed_triggered:
+        self.events.add(EventName.openpilotCrashedRandomEvents)
+        self.openpilot_crashed_triggered = True
+
       self.crashed_timer += DT_CTRL
 
     if self.speed_limit_alert or self.speed_limit_confirmation:
@@ -1000,6 +1047,17 @@ class Controls:
     if self.sm.frame == 550 and self.CP.lateralTuning.which() == 'torque' and self.CI.use_nnff:
       self.events.add(EventName.torqueNNLoad)
 
+    if self.random_events:
+      conversion = 1 if self.is_metric else CV.KPH_TO_MPH
+      v_cruise = max(self.v_cruise_helper.v_cruise_cluster_kph, self.v_cruise_helper.v_cruise_kph) * conversion
+
+      if 70 > v_cruise >= 69:
+        if not self.vCruise69_alert_played:
+          self.events.add(EventName.vCruise69)
+          self.vCruise69_alert_played = True
+      else:
+        self.vCruise69_alert_played = False
+
   def update_frogpilot_variables(self, CS):
     frogpilot_plan = self.sm['frogpilotPlan']
 
@@ -1017,6 +1075,13 @@ class Controls:
 
     if self.frogpilot_variables.conditional_experimental_mode:
       self.experimental_mode = self.sm['frogpilotPlan'].conditionalExperimental
+
+    if self.random_event_triggered:
+      self.random_event_timer += DT_CTRL
+      if self.random_event_timer >= 4:
+        self.random_event_triggered = False
+        self.random_event_timer = 0
+        self.params_memory.remove("CurrentRandomEvent")
 
     self.signal_check = not (CS.vEgo < self.pause_lateral_below_signal and (CS.leftBlinker or CS.rightBlinker) and not CS.standstill)
     self.speed_check = not (CS.vEgo < self.pause_lateral_below_speed and not CS.standstill)
@@ -1042,6 +1107,7 @@ class Controls:
     frog_sounds = custom_sounds == 1
     self.goat_scream = frog_sounds and self.params.get_bool("GoatScream")
     self.holiday_themes = custom_theme and self.params.get_bool("HolidayThemes")
+    self.random_events = custom_theme and self.params.get_bool("RandomEvents")
 
     experimental_mode_activation = self.params.get_bool("ExperimentalModeActivation")
     self.experimental_mode_via_distance = experimental_mode_activation and self.params.get_bool("ExperimentalModeViaDistance")

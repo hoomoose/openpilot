@@ -322,6 +322,7 @@ void ui_update_frogpilot_params(UIState *s) {
   scene.custom_icons = custom_theme ? params.getInt("CustomIcons") : 0;
   scene.custom_signals = custom_theme ? params.getInt("CustomSignals") : 0;
   scene.holiday_themes = custom_theme && params.getBool("HolidayThemes");
+  scene.random_events = custom_theme && params.getBool("RandomEvents");
 
   scene.disable_smoothing_mtsc = params.getBool("MTSCEnabled") && params.getBool("DisableMTSCSmoothing");
   scene.experimental_mode_via_screen = scene.longitudinal_control && params.getBool("ExperimentalModeActivation") && params.getBool("ExperimentalModeViaScreen");
@@ -445,6 +446,7 @@ void UIState::update() {
   // FrogPilot live variables that need to be constantly checked
   scene.conditional_status = scene.conditional_experimental ? paramsMemory.getInt("CEStatus") : 0;
   scene.current_holiday_theme = scene.holiday_themes ? paramsMemory.getInt("CurrentHolidayTheme") : 0;
+  scene.current_random_event = scene.random_events ? paramsMemory.getInt("CurrentRandomEvent") : 0;
 }
 
 void UIState::setPrimeType(PrimeType type) {

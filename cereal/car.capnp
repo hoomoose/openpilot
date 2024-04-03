@@ -118,6 +118,10 @@ struct CarEvent @0x9b1657f34caf3ad3 {
     paramsdPermanentError @119;
 
     # FrogPilot events
+    accel30 @120;
+    accel35 @121;
+    accel40 @122;
+    firefoxSteerSaturated @123;
     goatSteerSaturated @124;
     greenLight @125;
     holidayActive @126;
@@ -125,9 +129,12 @@ struct CarEvent @0x9b1657f34caf3ad3 {
     leadDeparting @128;
     noLaneAvailable @129;
     openpilotCrashed @130;
+    openpilotCrashedRandomEvents @131;
     pedalInterceptorNoBrake @132;
     speedLimitChanged @133;
     torqueNNLoad @134;
+    vCruise69 @137;
+    yourFrogTriedToKillMe @138;
 
     radarCanErrorDEPRECATED @15;
     communityFeatureDisallowedDEPRECATED @62;
@@ -418,6 +425,15 @@ struct CarControl {
       prompt @6;
       promptRepeat @7;
       promptDistracted @8;
+
+      # Random Events
+      angry @9;
+      doc @10;
+      fart @11;
+      firefox @12;
+      nessie @13;
+      noice @14;
+      uwu @15;
 
       # Other
       goat @16;
