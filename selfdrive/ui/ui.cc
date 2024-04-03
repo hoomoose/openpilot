@@ -308,6 +308,9 @@ void ui_update_frogpilot_params(UIState *s) {
   scene.disable_smoothing_mtsc = params.getBool("MTSCEnabled") && params.getBool("DisableMTSCSmoothing");
   scene.experimental_mode_via_screen = scene.longitudinal_control && params.getBool("ExperimentalModeActivation") && params.getBool("ExperimentalModeViaScreen");
 
+  bool lane_detection = params.getBool("CustomTheme") && params.getBool("LaneDetection");
+  scene.lane_detection_width = lane_detection ? params.getInt("LaneDetectionWidth") * (scene.is_metric ? 1 : FOOT_TO_METER) / 10 : 0;
+
   scene.model_ui = params.getBool("ModelUI");
   scene.dynamic_path_width = scene.model_ui && params.getBool("DynamicPathWidth");
   scene.hide_lead_marker = scene.model_ui && params.getBool("HideLeadMarker");

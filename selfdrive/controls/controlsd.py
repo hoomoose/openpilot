@@ -294,9 +294,15 @@ class Controls:
           self.events.add(EventName.laneChangeBlocked)
       else:
         if direction == LaneChangeDirection.left:
-          self.events.add(EventName.preLaneChangeLeft)
+          if self.sm['frogpilotPlan'].laneWidthLeft >= self.lane_detection_width:
+            self.events.add(EventName.preLaneChangeLeft)
+          else:
+            self.events.add(EventName.noLaneAvailable)
         else:
-          self.events.add(EventName.preLaneChangeRight)
+          if self.sm['frogpilotPlan'].laneWidthRight >= self.lane_detection_width:
+            self.events.add(EventName.preLaneChangeRight)
+          else:
+            self.events.add(EventName.noLaneAvailable)
     elif self.sm['modelV2'].meta.laneChangeState in (LaneChangeState.laneChangeStarting,
                                                     LaneChangeState.laneChangeFinishing):
       self.events.add(EventName.laneChange)
@@ -994,6 +1000,9 @@ class Controls:
 
     longitudinal_tune = self.params.get_bool("LongitudinalTune")
     self.frogpilot_variables.sport_plus = longitudinal_tune and self.params.get_int("AccelerationProfile") == 3
+
+    self.lane_detection = self.params.get_bool("NudgelessLaneChange") and self.params.get_bool("LaneDetection")
+    self.lane_detection_width = self.params.get_int("LaneDetectionWidth") * (1 if self.is_metric else CV.FOOT_TO_METER) / 10 if self.lane_detection else 0
 
     quality_of_life = self.params.get_bool("QOLControls")
     self.frogpilot_variables.custom_cruise_increase = self.params.get_int("CustomCruise") * (1 if self.is_metric else CV.MPH_TO_KPH) if quality_of_life else 1

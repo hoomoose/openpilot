@@ -138,6 +138,7 @@ private:
   float cruiseAdjustment;
   float currentAcceleration;
   float distanceConversion;
+  float laneDetectionWidth;
   float laneWidthLeft;
   float laneWidthRight;
   float speedConversion;
