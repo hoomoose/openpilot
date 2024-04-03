@@ -231,6 +231,7 @@ private:
   bool showSLCOffset;
   bool slcOverridden;
   bool speedLimitController;
+  bool trafficModeActive;
   bool turnSignalLeft;
   bool turnSignalRight;
   bool useViennaSLCSign;

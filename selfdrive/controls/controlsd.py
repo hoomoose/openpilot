@@ -192,6 +192,7 @@ class Controls:
     self.signal_check = False
     self.speed_check = False
     self.stopped_for_light_previously = False
+    self.traffic_mode_changed = False
 
     self.crashed_timer = 0
     self.drive_distance = 0
@@ -718,13 +719,19 @@ class Controls:
       if any(not be.pressed and be.type == ButtonType.gapAdjustCruise for be in CS.buttonEvents) or self.params_memory.get_bool("OnroadDistanceButtonPressed"):
         self.gap_counter += 1
 
-      if self.gap_counter == CRUISE_LONG_PRESS and self.experimental_mode_via_distance:
+      if self.gap_counter == CRUISE_LONG_PRESS * 5 and self.traffic_mode:
+        self.FPCC.traffic_mode_active = not self.FPCC.traffic_mode_active
+        self.traffic_mode_changed = True
+
+      if (self.gap_counter == CRUISE_LONG_PRESS or self.traffic_mode_changed) and self.experimental_mode_via_distance:
         if self.frogpilot_variables.conditional_experimental_mode:
           conditional_status = self.params_memory.get_int("CEStatus")
           override_value = 0 if conditional_status in {1, 2, 3, 4, 5, 6} else 1 if conditional_status >= 7 else 2
           self.params_memory.put_int("CEStatus", override_value)
         else:
           self.params.put_nonblocking("ExperimentalMode", not self.experimental_mode)
+
+        self.traffic_mode_changed = False
 
       if not any(not be.pressed and be.type == ButtonType.gapAdjustCruise for be in CS.buttonEvents):
         if 0 < self.gap_counter < CRUISE_LONG_PRESS:
@@ -1154,6 +1161,7 @@ class Controls:
 
     longitudinal_tune = self.params.get_bool("LongitudinalTune")
     self.frogpilot_variables.sport_plus = longitudinal_tune and self.params.get_int("AccelerationProfile") == 3
+    self.traffic_mode = longitudinal_tune and self.params.get_bool("TrafficMode")
 
     self.lane_detection = self.params.get_bool("NudgelessLaneChange") and self.params.get_bool("LaneDetection")
     self.lane_detection_width = self.params.get_int("LaneDetectionWidth") * (1 if self.is_metric else CV.FOOT_TO_METER) / 10 if self.lane_detection else 0

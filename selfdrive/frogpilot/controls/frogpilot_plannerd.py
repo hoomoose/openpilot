@@ -29,6 +29,9 @@ A_CRUISE_MAX_VALS_ECO = [3.5, 3.2, 2.3, 2.0, 1.15, .80, .58, .36, .30, .091]
 A_CRUISE_MIN_VALS_SPORT = [-0.50, -0.52, -0.55, -0.57, -0.60]
 A_CRUISE_MAX_VALS_SPORT = [3.5, 3.5, 3.3, 2.8, 1.5, 1.0, .75, .6, .38, .2]
 
+TRAFFIC_MODE_BP = [0., CITY_SPEED_LIMIT]
+TRAFFIC_MODE_T_FOLLOW = [.50, 1.]
+
 def get_min_accel_eco(v_ego):
   return interp(v_ego, A_CRUISE_MIN_BP_CUSTOM, A_CRUISE_MIN_VALS_ECO)
 
@@ -117,7 +120,10 @@ class FrogPilotPlannerd:
       self.cem.update(carState, controlsState.enabled, frogpilotNavigation, modelData, radarState, road_curvature, stop_distance, self.t_follow, v_ego)
 
   def update_t_follow(self, controlsState, frogpilotCarControl, radarState, v_ego, v_lead):
-    t_follow = get_T_FOLLOW(self.custom_personalities, self.aggressive_follow, self.standard_follow, self.relaxed_follow, controlsState.personality)
+    if self.traffic_mode and frogpilotCarControl.trafficModeActive:
+      t_follow = interp(v_ego, TRAFFIC_MODE_BP, TRAFFIC_MODE_T_FOLLOW)
+    else:
+      t_follow = get_T_FOLLOW(self.custom_personalities, self.aggressive_follow, self.standard_follow, self.relaxed_follow, controlsState.personality)
 
     lead_distance = radarState.leadOne.dRel
 
@@ -256,6 +262,7 @@ class FrogPilotPlannerd:
     self.aggressive_acceleration = longitudinal_tune and self.params.get_bool("AggressiveAcceleration")
     self.increased_stopping_distance = self.params.get_int("StoppingDistance") * (1 if self.is_metric else CV.FOOT_TO_METER) if longitudinal_tune else 0
     self.smoother_braking = longitudinal_tune and self.params.get_bool("SmoothBraking")
+    self.traffic_mode = longitudinal_tune and self.params.get_bool("TrafficMode")
 
     self.map_turn_speed_controller = self.params.get_bool("MTSCEnabled")
     self.mtsc_curvature_check = self.map_turn_speed_controller and self.params.get_bool("MTSCCurvatureCheck")

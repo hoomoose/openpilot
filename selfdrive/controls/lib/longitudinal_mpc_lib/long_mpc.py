@@ -328,10 +328,10 @@ class LongitudinalMpc:
     lead_xv = np.column_stack((x_lead_traj, v_lead_traj))
     return lead_xv
 
-  def process_lead(self, lead):
+  def process_lead(self, lead, trafficModeActive):
     v_ego = self.x0[1]
     if lead is not None and lead.status:
-      x_lead = lead.dRel - self.increased_stopping_distance
+      x_lead = lead.dRel - (self.increased_stopping_distance if not trafficModeActive else 0)
       v_lead = lead.vLead
       a_lead = lead.aLeadK
       a_lead_tau = lead.aLeadTau
@@ -357,12 +357,12 @@ class LongitudinalMpc:
     self.cruise_min_a = min_a
     self.max_a = max_a
 
-  def update(self, radarstate, v_cruise, x, v, a, j, t_follow, personality=log.LongitudinalPersonality.standard):
+  def update(self, radarstate, v_cruise, x, v, a, j, t_follow, trafficModeActive, personality=log.LongitudinalPersonality.standard):
     v_ego = self.x0[1]
     self.status = radarstate.leadOne.status or radarstate.leadTwo.status
 
-    lead_xv_0 = self.process_lead(radarstate.leadOne)
-    lead_xv_1 = self.process_lead(radarstate.leadTwo)
+    lead_xv_0 = self.process_lead(radarstate.leadOne, trafficModeActive)
+    lead_xv_1 = self.process_lead(radarstate.leadTwo, trafficModeActive)
 
     # To estimate a safe distance from a moving lead, we calculate how much stopping
     # distance that lead needs as a minimum. We can add that to the current distance
