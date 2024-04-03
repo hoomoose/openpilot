@@ -312,7 +312,7 @@ void FrogPilotControlsPanel::updateCarToggles() {
 
     auto carFingerprint = CP.getCarFingerprint();
 
-    hasOpenpilotLongitudinal = CP.getOpenpilotLongitudinalControl();
+    hasOpenpilotLongitudinal = CP.getOpenpilotLongitudinalControl() && !params.getBool("DisableOpenpilotLongitudinal");
     hasPCMCruise = CP.getPcmCruise();
   } else {
     hasOpenpilotLongitudinal = false;

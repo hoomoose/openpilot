@@ -21,6 +21,8 @@ private:
   void updateState(const UIState &s);
   void updateToggles();
 
+  ParamControl *disableOpenpilotLong;
+
   std::set<QString> gmKeys = {};
   std::set<QString> subaruKeys = {};
   std::set<QString> toyotaKeys = {"LongitudinalTune"};

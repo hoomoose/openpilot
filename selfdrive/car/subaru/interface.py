@@ -9,7 +9,7 @@ from openpilot.selfdrive.car.subaru.values import CAR, GLOBAL_ES_ADDR, SubaruFla
 class CarInterface(CarInterfaceBase):
 
   @staticmethod
-  def _get_params(ret, params, candidate: CAR, fingerprint, car_fw, experimental_long, docs):
+  def _get_params(ret, params, candidate: CAR, fingerprint, car_fw, disable_openpilot_long, experimental_long, docs):
     ret.carName = "subaru"
     ret.radarUnavailable = True
     # for HYBRID CARS to be upstreamed, we need:
