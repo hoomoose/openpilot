@@ -45,6 +45,8 @@ FrogPilotControlsPanel::FrogPilotControlsPanel(SettingsWindow *parent) : FrogPil
     {"MTSCLimit", tr("Speed Change Hard Cap"), tr("Set a hard cap for MTSC. If MTSC requests a speed decrease greater than this value, it ignores the requested speed from MTSC. Purely used as a failsafe to prevent false positives. Leave this off if you never experience false positives!"), ""},
     {"MTSCAggressiveness", tr("Turn Speed Aggressiveness"), tr("Set turn speed aggressiveness. Higher values result in faster turns, lower values yield gentler turns.\n\nA change of +- 1% results in the speed being raised or lowered by about 1 mph."), ""},
 
+    {"ModelSelector", tr("Model Selector"), tr("Choose your preferred openpilot model."), "../assets/offroad/icon_calibration.png"},
+
     {"QOLControls", tr("Quality of Life"), tr("Miscellaneous quality of life changes to improve your overall openpilot experience."), "../frogpilot/assets/toggle_icons/quality_of_life.png"},
     {"CustomCruise", tr("Cruise Increase Interval"), tr("Set a custom interval to increase the max set speed by."), ""},
     {"DisableOnroadUploads", tr("Disable Onroad Uploads"), tr("Prevent uploads to comma connect unless you're offroad and connected to Wi-Fi."), ""},
@@ -234,6 +236,124 @@ FrogPilotControlsPanel::FrogPilotControlsPanel(SettingsWindow *parent) : FrogPil
     } else if (param == "MTSCLimit") {
       toggle = new FrogPilotParamValueControl(param, title, desc, icon, 0, 99, std::map<int, QString>(), this, false, tr(" mph"));
 
+    } else if (param == "ModelSelector") {
+      std::vector<QString> modelSelectorOptions{tr("Delete"), tr("Download"), tr("Select")};
+      modelSelector = new FrogPilotButtonsToggleControl(param, title, desc, icon, modelSelectorOptions);
+
+      QObject::connect(modelSelector, &FrogPilotButtonsToggleControl::buttonClicked, [=](int id) {
+        QDir modelDir("/data/models/");
+
+        QStringList models = QString::fromStdString(params.get("AvailableModels")).split(",");
+        QStringList modelLabels = QString::fromStdString(params.get("AvailableModelsNames")).split(",");
+
+        if (id == 0) {
+          QStringList modelNames = modelDir.entryList(QStringList() << "*.thneed", QDir::Files, QDir::NoSort);
+          QStringList readableModelNames;
+
+          for (const QString &modelName : modelNames) {
+            QString nameWithoutExtension = modelName.section('.', 0, 0);
+            QStringList words = nameWithoutExtension.split("-", QString::SkipEmptyParts);
+            for (QString &word : words) {
+              word[0] = word[0].toUpper();
+            }
+            readableModelNames.append(words.join(" "));
+          }
+
+          QString selectedReadableName = MultiOptionDialog::getSelection(tr("Select a model to delete"), readableModelNames, "", this);
+          if (!selectedReadableName.isEmpty()) {
+            if (!ConfirmationDialog::confirm(tr("Are you sure you want to delete this model?"), tr("Delete"), this)) return;
+
+            int index = readableModelNames.indexOf(selectedReadableName);
+            if (index != -1) {
+              QString originalFileName = modelNames.at(index);
+
+              std::thread([=, filePath = modelDir.absoluteFilePath(originalFileName)]() {
+                QFile fileToDelete(filePath);
+                if (fileToDelete.remove()) {
+                  QString currentModel = QString::fromStdString(params.get("Model"));
+                  if (originalFileName.section('.', 0, 0) == currentModel) {
+                    for (int i = 0; i < modelLabels.size(); ++i) {
+                      if (modelLabels.at(i).contains("(Default)")) {
+                        QString defaultModelValue = models.at(i);
+                        QString defaultModelName = modelLabels.at(i);
+                        params.put("Model", defaultModelValue.toStdString());
+                        params.put("ModelName", defaultModelName.toStdString());
+                        break;
+                      }
+                    }
+                  }
+                }
+              }).detach();
+            }
+          }
+
+        } else if (id == 1) {
+          QStringList filteredModelLabels;
+          QStringList existingModelFiles = modelDir.entryList(QStringList() << "*.thneed", QDir::Files, QDir::NoSort);
+
+          for (int i = 0; i < modelLabels.size(); ++i) {
+            QString modelFilePath = models.at(i) + ".thneed";
+            if (!existingModelFiles.contains(modelFilePath)) {
+              filteredModelLabels.append(modelLabels.at(i));
+            }
+          }
+
+          QString selection = MultiOptionDialog::getSelection(tr("Select a driving model to download"), filteredModelLabels, "", this);
+          if (!selection.isEmpty()) {
+            int originalModelIndex = modelLabels.indexOf(selection);
+            QString selectedModelValue = models.at(originalModelIndex);
+            QString modelFilePath = "/data/models/" + selectedModelValue + ".thneed";
+
+            if (online) {
+              params.put("Model", selectedModelValue.toStdString());
+              params.put("ModelName", selection.toStdString());
+              paramsMemory.putBool("DownloadModel", true);
+
+            } else {
+              FrogPilotConfirmationDialog::toggleAlert(
+                tr("Please connect to WiFi to download this model!"),
+                tr("Acknowledge"), this);
+            }
+          }
+
+        } else if (id == 2) {
+          QStringList existingModelFiles = modelDir.entryList(QStringList() << "*.thneed", QDir::Files, QDir::NoSort);
+          QStringList availableModels;
+
+          for (const QString &modelFile : existingModelFiles) {
+            QFileInfo fileInfo(modelDir.absoluteFilePath(modelFile));
+            if (fileInfo.size() > 0) {
+              QString modelNameWithoutExtension = modelFile.left(modelFile.length() - 7);
+              if (models.contains(modelNameWithoutExtension)) {
+                int modelIndex = models.indexOf(modelNameWithoutExtension);
+                if (modelIndex != -1) {
+                  availableModels.append(modelLabels.at(modelIndex));
+                }
+              }
+            }
+          }
+
+          std::sort(availableModels.begin(), availableModels.end(), [](const QString &a, const QString &b) {
+            return a.contains("(Default)") ? true : (!b.contains("(Default)") && a < b);
+          });
+
+          QString selection = MultiOptionDialog::getSelection(tr("Select a model"), availableModels, "", this);
+          if (!selection.isEmpty()) {
+            int selectedModelIndex = modelLabels.indexOf(selection);
+            QString selectedModelValue = models.at(selectedModelIndex);
+
+            params.put("Model", selectedModelValue.toStdString());
+            params.put("ModelName", selection.toStdString());
+
+            if (FrogPilotConfirmationDialog::yesorno(tr("Do you want to start with a fresh calibration for the newly selected model?"), this)) {
+              params.remove("CalibrationParams");
+              params.remove("LiveTorqueParameters");
+            }
+          }
+        }
+      });
+      toggle = modelSelector;
+
     } else if (param == "QOLControls") {
       FrogPilotParamManageControl *qolToggle = new FrogPilotParamManageControl(param, title, desc, icon, this);
       QObject::connect(qolToggle, &FrogPilotParamManageControl::manageButtonClicked, this, [this]() {
@@ -419,6 +539,7 @@ void FrogPilotControlsPanel::hideToggles() {
   aggressiveProfile->setVisible(false);
   conditionalSpeedsImperial->setVisible(false);
   conditionalSpeedsMetric->setVisible(false);
+  modelSelector->setVisible(true);
   standardProfile->setVisible(false);
   relaxedProfile->setVisible(false);
 

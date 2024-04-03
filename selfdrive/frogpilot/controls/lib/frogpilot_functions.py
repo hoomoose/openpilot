@@ -12,6 +12,8 @@ from openpilot.common.params import Params
 from openpilot.system.hardware import HARDWARE
 from openpilot.system.version import get_short_branch, get_commit_date
 
+from openpilot.selfdrive.frogpilot.controls.lib.model_manager import MODELS_PATH
+
 CITY_SPEED_LIMIT = 25  # 55mph is typically the minimum speed for highways
 CRUISING_SPEED = 5     # Roughly the speed cars go when not touching the gas while in drive
 PROBABILITY = 0.6      # 60% chance of condition being true
@@ -118,6 +120,9 @@ class FrogPilotFunctions:
       self.run_cmd(cmd, f"Successfully backed up toggles to {backup_folder_name}.", f"Failed to backup toggles to {backup_folder_name}.")
 
   def setup_frogpilot(self):
+    if not os.path.exists(MODELS_PATH):
+      os.makedirs(MODELS_PATH)
+
     if not os.access('/persist', os.W_OK):
       remount_cmd = ['sudo', 'mount', '-o', 'remount,rw', '/persist']
       self.run_cmd(remount_cmd, "Successfully remounted /persist as read-write.", "Failed to remount /persist.")
@@ -138,6 +143,9 @@ class FrogPilotFunctions:
       self.run_cmd(copy_cmd, "Successfully replaced bg.jpg with frogpilot_boot_logo.png.", "Failed to replace boot logo")
 
   def uninstall_frogpilot(self):
+    if os.path.exists(MODELS_PATH):
+      shutil.rmtree(MODELS_PATH)
+
     original_boot_logo = f'{BASEDIR}/selfdrive/frogpilot/assets/other_images/bg.jpg'
     boot_logo_location = '/usr/comma/bg.jpg'
 

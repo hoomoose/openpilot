@@ -12,6 +12,7 @@ from openpilot.system.hardware import HARDWARE
 
 from openpilot.selfdrive.frogpilot.controls.frogpilot_plannerd import FrogPilotPlannerd
 from openpilot.selfdrive.frogpilot.controls.lib.frogpilot_functions import FrogPilotFunctions
+from openpilot.selfdrive.frogpilot.controls.lib.model_manager import download_model, populate_models
 from openpilot.selfdrive.frogpilot.controls.lib.theme_manager import ThemeManager
 
 ETHERNET = log.DeviceState.NetworkType.ethernet
@@ -66,6 +67,9 @@ def frogpilot_thread():
 
         frogpilot_plannerd.publish(sm, pm)
 
+    if params_memory.get_bool("DownloadModel"):
+      download_model()
+
     if params_memory.get_bool("FrogPilotTogglesUpdated"):
       automatic_updates = params.get_bool("AutomaticUpdates")
       frogpilot_functions.backup_toggles()
@@ -87,6 +91,8 @@ def frogpilot_thread():
       if check_update:
         if automatic_updates:
           automatic_update_check(params)
+
+        populate_models()
 
       theme_manager.update_holiday()
       first_run = False
