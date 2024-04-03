@@ -1,4 +1,58 @@
+#include <filesystem>
+#include <iostream>
+
 #include "selfdrive/frogpilot/ui/qt/offroad/control_settings.h"
+
+namespace fs = std::filesystem;
+
+bool checkCommaNNFFSupport(const std::string &carFingerprint) {
+  const fs::path filePath = "/data/openpilot/selfdrive/car/torque_data/neural_ff_weights.json";
+
+  std::cout << "Attempting to open neural_ff_weights: " << fs::absolute(filePath) << std::endl;
+
+  if (!fs::exists(filePath)) {
+    std::cerr << "neural_ff_weights does not exist: " << fs::absolute(filePath) << std::endl;
+    return false;
+  }
+
+  std::ifstream file(filePath);
+  std::stringstream buffer;
+  buffer << file.rdbuf();
+  std::string content = buffer.str();
+
+  return content.find(carFingerprint) != std::string::npos;
+}
+
+bool checkNNFFLogFileExists(const std::string &carFingerprint) {
+  const fs::path dirPath("../car/torque_data/lat_models");
+
+  // Debugging: Print the absolute path being checked
+  std::cout << "Checking lat_models directory: " << fs::absolute(dirPath) << std::endl;
+
+  try {
+    if (fs::exists(dirPath)) {
+      std::cout << "lat_models directory exists. Iterating files..." << std::endl;
+
+      for (const auto& entry : fs::directory_iterator(dirPath)) {
+        std::cout << "Examining file: " << entry.path() << std::endl;
+
+        if (entry.path().filename().string().find(carFingerprint) == 0) {
+          std::cout << "NNFF supports fingerprint: " << entry.path().filename() << std::endl;
+          return true;
+        } else {
+          std::cout << "NNFF does not support fingerprint." << std::endl;
+        }
+      }
+    } else {
+      std::cerr << "Directory does not exist: " << fs::absolute(dirPath) << std::endl;
+    }
+  } catch (const fs::filesystem_error& e) {
+    std::cerr << "Filesystem error: " << e.what() << '\n';
+  }
+
+  std::cout << "No matching file found in directory." << std::endl;
+  return false;
+}
 
 FrogPilotControlsPanel::FrogPilotControlsPanel(SettingsWindow *parent) : FrogPilotListWidget(parent) {
   const std::vector<std::tuple<QString, QString, QString, QString>> controlToggles {
@@ -32,6 +86,8 @@ FrogPilotControlsPanel::FrogPilotControlsPanel(SettingsWindow *parent) : FrogPil
 
     {"LateralTune", tr("Lateral Tuning"), tr("Modify openpilot's steering behavior."), "../frogpilot/assets/toggle_icons/icon_lateral_tune.png"},
     {"ForceAutoTune", tr("Force Auto Tune"), tr("Forces comma's auto lateral tuning for unsupported vehicles."), ""},
+    {"NNFF", tr("NNFF"), tr("Use Twilsonco's Neural Network Feedforward for enhanced precision in lateral control."), ""},
+    {"NNFFLite", tr("NNFF-Lite"), tr("Use Twilsonco's Neural Network Feedforward for enhanced precision in lateral control for cars without available NNFF logs."), ""},
 
     {"LongitudinalTune", tr("Longitudinal Tuning"), tr("Modify openpilot's acceleration and braking behavior."), "../frogpilot/assets/toggle_icons/icon_longitudinal_tune.png"},
     {"AccelerationProfile", tr("Acceleration Profile"), tr("Change the acceleration rate to be either sporty or eco-friendly."), ""},
@@ -190,7 +246,18 @@ FrogPilotControlsPanel::FrogPilotControlsPanel(SettingsWindow *parent) : FrogPil
       QObject::connect(lateralTuneToggle, &FrogPilotParamManageControl::manageButtonClicked, this, [this]() {
         openParentToggle();
         for (auto &[key, toggle] : toggles) {
-          toggle->setVisible(lateralTuneKeys.find(key.c_str()) != lateralTuneKeys.end());
+          std::set<QString> modifiedLateralTuneKeys = lateralTuneKeys;
+
+          if (hasCommaNNFFSupport) {
+            modifiedLateralTuneKeys.erase("NNFF");
+            modifiedLateralTuneKeys.erase("NNFFLite");
+          } else if (hasNNFFLog) {
+            modifiedLateralTuneKeys.erase("NNFFLite");
+          } else {
+            modifiedLateralTuneKeys.erase("NNFF");
+          }
+
+          toggle->setVisible(modifiedLateralTuneKeys.find(key.c_str()) != modifiedLateralTuneKeys.end());
         }
       });
       toggle = lateralTuneToggle;
@@ -438,7 +505,7 @@ FrogPilotControlsPanel::FrogPilotControlsPanel(SettingsWindow *parent) : FrogPil
     }
   });
 
-  std::set<QString> rebootKeys = {"AlwaysOnLateral", "AlwaysOnLateralMain", "HigherBitrate", "PauseAOLOnBrake"};
+  std::set<QString> rebootKeys = {"AlwaysOnLateral", "AlwaysOnLateralMain", "HigherBitrate", "NNFF", "NNFFLite", "PauseAOLOnBrake"};
   for (const QString &key : rebootKeys) {
     QObject::connect(toggles[key.toStdString().c_str()], &ToggleControl::toggleFlipped, [this]() {
       if (started) {
@@ -487,6 +554,8 @@ void FrogPilotControlsPanel::updateCarToggles() {
 
     auto carFingerprint = CP.getCarFingerprint();
 
+    hasCommaNNFFSupport = checkCommaNNFFSupport(carFingerprint);
+    hasNNFFLog = checkNNFFLogFileExists(carFingerprint);
     hasOpenpilotLongitudinal = CP.getOpenpilotLongitudinalControl() && !params.getBool("DisableOpenpilotLongitudinal");
     hasPCMCruise = CP.getPcmCruise();
   } else {
