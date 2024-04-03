@@ -312,6 +312,7 @@ std::unordered_map<std::string, uint32_t> keys = {
     {"LastMapsUpdate", PERSISTENT},
     {"LateralTune", PERSISTENT},
     {"LeadDepartingAlert", PERSISTENT},
+    {"LeadDetectionThreshold", PERSISTENT},
     {"LeadInfo", PERSISTENT},
     {"LockDoors", PERSISTENT},
     {"LongitudinalTune", PERSISTENT},
