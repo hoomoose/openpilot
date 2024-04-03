@@ -315,6 +315,7 @@ void ui_update_frogpilot_params(UIState *s) {
   scene.pedals_on_ui = custom_onroad_ui && params.getBool("PedalsOnUI");
   scene.road_name_ui = custom_onroad_ui && params.getBool("RoadNameUI");
   scene.rotating_wheel = custom_onroad_ui && params.getBool("RotatingWheel");
+  scene.wheel_icon = custom_onroad_ui ? params.getInt("WheelIcon") : 0;
 
   bool custom_theme = params.getBool("CustomTheme");
   scene.custom_colors = custom_theme ? params.getInt("CustomColors") : 0;
