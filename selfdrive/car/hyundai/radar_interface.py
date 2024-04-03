@@ -34,7 +34,8 @@ class RadarInterface(RadarInterfaceBase):
   def __init__(self, CP):
     super().__init__(CP)
     self.CP = CP
-    self.camera_scc = (CP.Flags & HyundaiFlags.CAMERA_SCC) or (CP.Flags & HyundaiFlags.CANFD_CAMERA_SCC)
+    self.camera_scc = CP.Flags & HyundaiFlags.CANFD_CAMERA_SCC if CP.carFingerprint in CANFD_CAR else \
+                      CP.Flags & HyundaiFlags.CAMERA_SCC
     self.updated_messages = set()
     self.trigger_msg = 0x1A0 if self.camera_scc and CP.carFingerprint in CANFD_CAR else \
                        0x420 if self.camera_scc else \
