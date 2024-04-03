@@ -97,25 +97,25 @@ class RadarInterface(RadarInterfaceBase):
             del self.pts[ii]
     else:
       for addr in range(RADAR_START_ADDR, RADAR_START_ADDR + RADAR_MSG_COUNT):
-      msg = self.rcp.vl[f"RADAR_TRACK_{addr:x}"]
+        msg = self.rcp.vl[f"RADAR_TRACK_{addr:x}"]
 
-      if addr not in self.pts:
-        self.pts[addr] = car.RadarData.RadarPoint.new_message()
-        self.pts[addr].trackId = self.track_id
-        self.track_id += 1
+        if addr not in self.pts:
+          self.pts[addr] = car.RadarData.RadarPoint.new_message()
+          self.pts[addr].trackId = self.track_id
+          self.track_id += 1
 
-      valid = msg['STATE'] in (3, 4)
-      if valid:
-        azimuth = math.radians(msg['AZIMUTH'])
-        self.pts[addr].measured = True
-        self.pts[addr].dRel = math.cos(azimuth) * msg['LONG_DIST']
-        self.pts[addr].yRel = 0.5 * -math.sin(azimuth) * msg['LONG_DIST']
-        self.pts[addr].vRel = msg['REL_SPEED']
-        self.pts[addr].aRel = msg['REL_ACCEL']
-        self.pts[addr].yvRel = float('nan')
-
-      else:
-        del self.pts[addr]
+        valid = msg['STATE'] in (3, 4)
+        if valid:
+          azimuth = math.radians(msg['AZIMUTH'])
+          self.pts[addr].measured = True
+          self.pts[addr].dRel = math.cos(azimuth) * msg['LONG_DIST']
+          self.pts[addr].yRel = 0.5 * -math.sin(azimuth) * msg['LONG_DIST']
+          self.pts[addr].vRel = msg['REL_SPEED']
+          self.pts[addr].aRel = msg['REL_ACCEL']
+          self.pts[addr].yvRel = float('nan')
+  
+        else:
+          del self.pts[addr]
 
     ret.points = list(self.pts.values())
     return ret
