@@ -331,7 +331,7 @@ class LongitudinalMpc:
   def process_lead(self, lead):
     v_ego = self.x0[1]
     if lead is not None and lead.status:
-      x_lead = lead.dRel
+      x_lead = lead.dRel - self.increased_stopping_distance
       v_lead = lead.vLead
       a_lead = lead.aLeadK
       a_lead_tau = lead.aLeadTau
@@ -487,6 +487,7 @@ class LongitudinalMpc:
     is_metric = params.get_bool("IsMetric")
 
     longitudinal_tune = params.get_bool("LongitudinalTune")
+    self.increased_stopping_distance = params.get_int("StoppingDistance") * (1 if is_metric else CV.FOOT_TO_METER) if longitudinal_tune else 0
 
     self.custom_personalities = params.get_bool("CustomPersonalities")
     self.aggressive_jerk = params.get_float("AggressiveJerk")
