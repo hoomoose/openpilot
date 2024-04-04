@@ -67,7 +67,7 @@ void HomeWindow::updateState(const UIState &s) {
     slayout->setCurrentWidget(body);
   }
 
-  showDriverView(s.scene.show_driver_camera, s.scene.started);
+  showDriverView(s.scene.driver_camera_timer >= 5, s.scene.started);
 }
 
 void HomeWindow::offroadTransition(bool offroad) {

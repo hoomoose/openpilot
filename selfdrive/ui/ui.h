@@ -215,6 +215,7 @@ typedef struct UIScene {
   bool parked;
   bool pedals_on_ui;
   bool random_events;
+  bool reverse;
   bool reverse_cruise;
   bool reverse_cruise_ui;
   bool right_hand_drive;
@@ -223,7 +224,6 @@ typedef struct UIScene {
   bool screen_recorder;
   bool show_aol_status_bar;
   bool show_cem_status_bar;
-  bool show_driver_camera;
   bool show_slc_offset;
   bool show_slc_offset_ui;
   bool speed_limit_changed;
@@ -270,6 +270,7 @@ typedef struct UIScene {
   int custom_icons;
   int custom_signals;
   int desired_follow;
+  int driver_camera_timer;
   int map_style;
   int obstacle_distance;
   int obstacle_distance_stock;
