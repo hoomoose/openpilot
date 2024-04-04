@@ -114,6 +114,8 @@ FrogPilotControlsPanel::FrogPilotControlsPanel(SettingsWindow *parent) : FrogPil
     {"DisableOnroadUploads", tr("Disable Onroad Uploads"), tr("Prevent uploads to comma connect unless you're offroad and connected to Wi-Fi."), ""},
     {"HigherBitrate", tr("Higher Bitrate Recording"), tr("Increases the quality of the footage uploaded to comma connect."), ""},
     {"OnroadDistanceButton", tr("Onroad Distance Button"), tr("Simulate a distance button via the onroad UI to control personalities, 'Experimental Mode', and 'Traffic Mode'."), ""},
+    {"PauseLateralSpeed", tr("Pause Lateral Below"), tr("Pause lateral control on all speeds below the set speed."), ""},
+    {"PauseLateralOnSignal", tr("Pause Lateral On Turn Signal Below"), tr("Pause lateral control when using a turn signal below the set speed."), ""},
     {"ReverseCruise", tr("Reverse Cruise Increase"), tr("Reverses the 'long press' functionality logic to increase the max set speed by 5 instead of 1. Useful to increase the max speed quickly."), ""},
   };
 
@@ -455,6 +457,10 @@ FrogPilotControlsPanel::FrogPilotControlsPanel(SettingsWindow *parent) : FrogPil
       std::vector<QString> onroadDistanceToggles{"KaofuiIcons"};
       std::vector<QString> onroadDistanceToggleNames{tr("Use Kaofui's Distance Icons")};
       toggle = new FrogPilotParamToggleControl(param, title, desc, icon, onroadDistanceToggles, onroadDistanceToggleNames);
+    } else if (param == "PauseLateralSpeed") {
+      toggle = new FrogPilotParamValueControl(param, title, desc, icon, 0, 99, std::map<int, QString>(), this, false, tr(" mph"));
+    } else if (param == "PauseLateralOnSignal") {
+      toggle = new FrogPilotParamValueControl(param, title, desc, icon, 0, 99, std::map<int, QString>(), this, false, tr(" mph"));
     } else if (param == "ReverseCruise") {
       std::vector<QString> reverseCruiseToggles{"ReverseCruiseUI"};
       std::vector<QString> reverseCruiseNames{tr("Control Via UI")};
@@ -612,12 +618,16 @@ void FrogPilotControlsPanel::updateMetric() {
     params.putIntNonBlocking("CustomCruise", std::nearbyint(params.getInt("CustomCruise") * speedConversion));
     params.putIntNonBlocking("LaneDetectionWidth", std::nearbyint(params.getInt("LaneDetectionWidth") * distanceConversion));
     params.putIntNonBlocking("MTSCLimit", std::nearbyint(params.getInt("MTSCLimit") * speedConversion));
+    params.putIntNonBlocking("PauseLateralSpeed", std::nearbyint(params.getInt("PauseLateralSpeed") * speedConversion));
+    params.putIntNonBlocking("PauseLateralOnSignal", std::nearbyint(params.getInt("PauseLateralOnSignal") * speedConversion));
     params.putIntNonBlocking("StoppingDistance", std::nearbyint(params.getInt("StoppingDistance") * distanceConversion));
   }
 
   FrogPilotParamValueControl *customCruiseToggle = static_cast<FrogPilotParamValueControl*>(toggles["CustomCruise"]);
   FrogPilotParamValueControl *laneWidthToggle = static_cast<FrogPilotParamValueControl*>(toggles["LaneDetectionWidth"]);
   FrogPilotParamValueControl *mtscLimitToggle = static_cast<FrogPilotParamValueControl*>(toggles["MTSCLimit"]);
+  FrogPilotParamValueControl *pauseLateralToggle = static_cast<FrogPilotParamValueControl*>(toggles["PauseLateralOnSignal"]);
+  FrogPilotParamValueControl *pauseLateralSpeedToggle = static_cast<FrogPilotParamValueControl*>(toggles["PauseLateralSpeed"]);
   FrogPilotParamValueControl *stoppingDistanceToggle = static_cast<FrogPilotParamValueControl*>(toggles["StoppingDistance"]);
 
   if (isMetric) {
@@ -626,6 +636,8 @@ void FrogPilotControlsPanel::updateMetric() {
     laneWidthToggle->updateControl(0, 30, tr(" meters"), 10);
 
     mtscLimitToggle->updateControl(0, 99, tr(" kph"));
+    pauseLateralToggle->updateControl(0, 99, tr(" kph"));
+    pauseLateralSpeedToggle->updateControl(0, 99, tr(" kph"));
 
     stoppingDistanceToggle->updateControl(0, 5, tr(" meters"));
   } else {
@@ -634,6 +646,8 @@ void FrogPilotControlsPanel::updateMetric() {
     laneWidthToggle->updateControl(0, 100, tr(" feet"), 10);
 
     mtscLimitToggle->updateControl(0, 99, tr(" mph"));
+    pauseLateralToggle->updateControl(0, 99, tr(" mph"));
+    pauseLateralSpeedToggle->updateControl(0, 99, tr(" mph"));
 
     stoppingDistanceToggle->updateControl(0, 10, tr(" feet"));
   }
@@ -641,6 +655,8 @@ void FrogPilotControlsPanel::updateMetric() {
   customCruiseToggle->refresh();
   laneWidthToggle->refresh();
   mtscLimitToggle->refresh();
+  pauseLateralToggle->refresh();
+  pauseLateralSpeedToggle->refresh();
   stoppingDistanceToggle->refresh();
 }
 

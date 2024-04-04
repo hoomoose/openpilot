@@ -183,6 +183,8 @@ class Controls:
     self.always_on_lateral_pause = self.always_on_lateral and self.params.get_bool("PauseAOLOnBrake")
 
     self.holiday_theme_alerted = False
+    self.signal_check = False
+    self.speed_check = False
     self.stopped_for_light_previously = False
 
     self.crashed_timer = 0
@@ -588,7 +590,7 @@ class Controls:
 
     # Check which actuators can be enabled
     standstill = CS.vEgo <= max(self.CP.minSteerSpeed, MIN_LATERAL_CONTROL_SPEED) or CS.standstill
-    CC.latActive = (self.active or self.FPCC.alwaysOnLateral) and not CS.steerFaultTemporary and not CS.steerFaultPermanent and \
+    CC.latActive = (self.active or self.FPCC.alwaysOnLateral) and self.signal_check and self.speed_check and not CS.steerFaultTemporary and not CS.steerFaultPermanent and \
                    (not standstill or self.joystick_mode)
     CC.longActive = self.enabled and not self.events.contains(ET.OVERRIDE_LONGITUDINAL) and self.CP.openpilotLongitudinalControl
 
@@ -964,6 +966,7 @@ class Controls:
     self.FPCC.alwaysOnLateral &= CS.cruiseState.available
     self.FPCC.alwaysOnLateral &= self.always_on_lateral
     self.FPCC.alwaysOnLateral &= self.driving_gear
+    self.FPCC.alwaysOnLateral &= self.signal_check and self.speed_check
     self.FPCC.alwaysOnLateral &= not (CS.brakePressed and self.always_on_lateral_pause)
 
     if self.FPCC.alwaysOnLateral:
@@ -971,6 +974,9 @@ class Controls:
 
     if self.frogpilot_variables.conditional_experimental_mode:
       self.experimental_mode = self.sm['frogpilotPlan'].conditionalExperimental
+
+    self.signal_check = not (CS.vEgo < self.pause_lateral_below_signal and (CS.leftBlinker or CS.rightBlinker) and not CS.standstill)
+    self.speed_check = not (CS.vEgo < self.pause_lateral_below_speed and not CS.standstill)
 
     if self.params_memory.get_bool("FrogPilotTogglesUpdated"):
       self.update_frogpilot_params()
@@ -1012,6 +1018,8 @@ class Controls:
 
     quality_of_life = self.params.get_bool("QOLControls")
     self.frogpilot_variables.custom_cruise_increase = self.params.get_int("CustomCruise") * (1 if self.is_metric else CV.MPH_TO_KPH) if quality_of_life else 1
+    self.pause_lateral_below_speed = self.params.get_int("PauseLateralSpeed") * (CV.KPH_TO_MS if self.is_metric else CV.MPH_TO_MS) if quality_of_life else 0
+    self.pause_lateral_below_signal = self.params.get_int("PauseLateralOnSignal") * (CV.KPH_TO_MS if self.is_metric else CV.MPH_TO_MS) if quality_of_life else 0
     self.frogpilot_variables.reverse_cruise_increase = quality_of_life and self.params.get_bool("ReverseCruise")
 
 def main():
