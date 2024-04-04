@@ -59,6 +59,8 @@ ButtonType = car.CarState.ButtonEvent.Type
 GearShifter = car.CarState.GearShifter
 SafetyModel = car.CarParams.SafetyModel
 
+FrogPilotButtonType = custom.FrogPilotCarState.ButtonEvent.Type
+
 IGNORED_SAFETY_MODES = (SafetyModel.silent, SafetyModel.noOutput)
 CSID_MAP = {"1": EventName.roadCameraError, "2": EventName.wideRoadCameraError, "0": EventName.driverCameraError}
 ACTUATOR_FIELDS = tuple(car.CarControl.Actuators.schema.fields.keys())
@@ -1122,6 +1124,14 @@ class Controls:
 
         self.drive_added = True
 
+    if any(not be.pressed and be.type == FrogPilotButtonType.lkas for be in CS.buttonEvents) and self.experimental_mode_via_lkas:
+      if self.frogpilot_variables.conditional_experimental_mode:
+        conditional_status = self.params_memory.get_int("CEStatus")
+        override_value = 0 if conditional_status in {1, 2, 3, 4, 5, 6} else 3 if conditional_status >= 7 else 4
+        self.params_memory.put_int("CEStatus", override_value)
+      else:
+        self.params.put_nonblocking("ExperimentalMode", not self.experimental_mode)
+
     if self.random_event_triggered:
       self.random_event_timer += DT_CTRL
       if self.random_event_timer >= 4:
@@ -1157,7 +1167,7 @@ class Controls:
 
     experimental_mode_activation = self.params.get_bool("ExperimentalModeActivation")
     self.experimental_mode_via_distance = experimental_mode_activation and self.params.get_bool("ExperimentalModeViaDistance")
-    self.frogpilot_variables.experimental_mode_via_lkas = experimental_mode_activation and self.params.get_bool("ExperimentalModeViaLKAS")
+    self.experimental_mode_via_lkas = experimental_mode_activation and self.params.get_bool("ExperimentalModeViaLKAS")
 
     lateral_tune = self.params.get_bool("LateralTune")
     self.force_auto_tune = lateral_tune and self.params.get_float("ForceAutoTune")

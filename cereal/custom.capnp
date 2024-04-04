@@ -14,17 +14,25 @@ struct FrogPilotCarControl @0x81c2f05a394cf4af {
   trafficModeActive @2 :Bool;
 }
 
-struct FrogPilotDeviceState @0xaedffd8f31e7b55d {
+struct FrogPilotCarState @0xaedffd8f31e7b55d {
+  struct ButtonEvent {
+    enum Type {
+      lkas @0;
+    }
+  }
+}
+
+struct FrogPilotDeviceState @0xf35cc4560bbf6ec2  {
   freeSpace @0 :Int16;
   usedSpace @1 :Int16;
 }
 
-struct FrogPilotNavigation @0xf35cc4560bbf6ec2 {
+struct FrogPilotNavigation @0xda96579883444c35 {
   approachingIntersection @0 :Bool;
   approachingTurn @1 :Bool;
 }
 
-struct FrogPilotPlan @0xda96579883444c35 {
+struct FrogPilotPlan @0x80ae746ee2596b11 {
   adjustedCruise @0 :Float64;
   conditionalExperimental @1 :Bool;
   desiredFollowDistance @2 :Int16;
@@ -44,9 +52,6 @@ struct FrogPilotPlan @0xda96579883444c35 {
   tFollow @16 :Float32;
   vCruise @17 :Float32;
   vtscControllingCurve @18 :Bool;
-}
-
-struct CustomReserved4 @0x80ae746ee2596b11 {
 }
 
 struct CustomReserved5 @0xa5cd762cd951a455 {

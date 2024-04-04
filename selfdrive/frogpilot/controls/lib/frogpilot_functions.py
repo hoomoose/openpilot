@@ -58,11 +58,8 @@ class MovingAverageCalculator:
     self.total = 0
 
 class FrogPilotFunctions:
-  def __init__(self):
-    self.params = Params()
-    self.params_memory = Params("/dev/shm/params")
-
-  def run_cmd(self, cmd, success_msg, fail_msg):
+  @classmethod
+  def run_cmd(cls, cmd, success_msg, fail_msg):
     try:
       subprocess.check_call(cmd)
       print(success_msg)
@@ -71,8 +68,8 @@ class FrogPilotFunctions:
     except Exception as e:
       print(f"Unexpected error occurred: {e}")
 
-  @staticmethod
-  def backup_frogpilot():
+  @classmethod
+  def backup_frogpilot(cls):
     frogpilot_backup_directory = "/data/backups"
     os.makedirs(frogpilot_backup_directory, exist_ok=True)
 
@@ -90,14 +87,16 @@ class FrogPilotFunctions:
 
     if not os.path.exists(backup_path):
       cmd = ['sudo', 'cp', '-a', f"{BASEDIR}", f"{backup_path}/"]
-      self.run_cmd(cmd, f"Successfully backed up FrogPilot to {backup_folder_name}.", f"Failed to backup FrogPilot to {backup_folder_name}.")
+      cls.run_cmd(cmd, f"Successfully backed up FrogPilot to {backup_folder_name}.", f"Failed to backup FrogPilot to {backup_folder_name}.")
 
-  def backup_toggles(self):
-    all_keys = self.params.all_keys()
+  @classmethod
+  def backup_toggles(cls):
+    params = Params()
     params_storage = Params("/persist/params")
 
+    all_keys = params.all_keys()
     for key in all_keys:
-      value = self.params.get(key)
+      value = params.get(key)
       if value is not None:
         params_storage.put(key, value)
 
@@ -117,15 +116,16 @@ class FrogPilotFunctions:
 
     if not os.path.exists(backup_path):
       cmd = ['sudo', 'cp', '-a', '/data/params/.', f"{backup_path}/"]
-      self.run_cmd(cmd, f"Successfully backed up toggles to {backup_folder_name}.", f"Failed to backup toggles to {backup_folder_name}.")
+      cls.run_cmd(cmd, f"Successfully backed up toggles to {backup_folder_name}.", f"Failed to backup toggles to {backup_folder_name}.")
 
-  def setup_frogpilot(self):
+  @classmethod
+  def setup_frogpilot(cls):
     if not os.path.exists(MODELS_PATH):
       os.makedirs(MODELS_PATH)
 
     if not os.access('/persist', os.W_OK):
       remount_cmd = ['sudo', 'mount', '-o', 'remount,rw', '/persist']
-      self.run_cmd(remount_cmd, "Successfully remounted /persist as read-write.", "Failed to remount /persist.")
+      cls.run_cmd(remount_cmd, "Successfully remounted /persist as read-write.", "Failed to remount /persist.")
 
     if os.path.isdir('/persist/comma/params') and os.path.isdir('/persist/params'):
       if os.listdir('/persist/comma/params') and os.listdir('/persist/params'):
@@ -136,13 +136,14 @@ class FrogPilotFunctions:
 
     if 'ro,' in subprocess.check_output(['mount']).decode():
       remount_cmd = ['sudo', 'mount', '-o', 'remount,rw', '/']
-      self.run_cmd(remount_cmd, "File system remounted as read-write.", "Failed to remount file system")
+      cls.run_cmd(remount_cmd, "File system remounted as read-write.", "Failed to remount file system")
 
     if not filecmp.cmp(frogpilot_boot_logo, boot_logo_location, shallow=False):
       copy_cmd = ['sudo', 'cp', frogpilot_boot_logo, boot_logo_location]
-      self.run_cmd(copy_cmd, "Successfully replaced bg.jpg with frogpilot_boot_logo.png.", "Failed to replace boot logo")
+      cls.run_cmd(copy_cmd, "Successfully replaced bg.jpg with frogpilot_boot_logo.png.", "Failed to replace boot logo")
 
-  def uninstall_frogpilot(self):
+  @classmethod
+  def uninstall_frogpilot(cls):
     if os.path.exists(MODELS_PATH):
       shutil.rmtree(MODELS_PATH)
 
@@ -150,21 +151,12 @@ class FrogPilotFunctions:
     boot_logo_location = '/usr/comma/bg.jpg'
 
     copy_cmd = ['sudo', 'cp', original_boot_logo, boot_logo_location]
-    self.run_cmd(copy_cmd, "Successfully restored the original boot logo.", "Failed to restore the original boot logo.")
+    cls.run_cmd(copy_cmd, "Successfully restored the original boot logo.", "Failed to restore the original boot logo.")
 
     remount_ro_persist_cmd = ['sudo', 'mount', '-o', 'remount,ro', '/persist']
-    self.run_cmd(remount_ro_persist_cmd, "Successfully remounted /persist as read-only.", "Failed to remount /persist.")
+    cls.run_cmd(remount_ro_persist_cmd, "Successfully remounted /persist as read-only.", "Failed to remount /persist.")
 
     remount_ro_cmd = ['sudo', 'mount', '-o', 'remount,ro', '/']
-    self.run_cmd(remount_ro_cmd, "File system remounted as read-only.", "Failed to remount file system as read-only.")
+    cls.run_cmd(remount_ro_cmd, "File system remounted as read-only.", "Failed to remount file system as read-only.")
 
     HARDWARE.uninstall()
-
-  def update_cestatus_lkas(self):
-    conditional_status = self.params_memory.get_int("CEStatus")
-    override_value = 0 if conditional_status in {1, 2, 3, 4, 5, 6} else 3 if conditional_status >= 7 else 4
-    self.params_memory.put_int("CEStatus", override_value)
-
-  def update_experimental_mode(self):
-    experimental_mode = self.params.get_bool("ExperimentalMode")
-    self.params.put_bool("ExperimentalMode", not experimental_mode)

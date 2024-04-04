@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 import os
-from cereal import car
+from cereal import car, custom
 from math import fabs, exp
 from panda import Panda
 
@@ -19,6 +19,8 @@ TransmissionType = car.CarParams.TransmissionType
 NetworkLocation = car.CarParams.NetworkLocation
 BUTTONS_DICT = {CruiseButtons.RES_ACCEL: ButtonType.accelCruise, CruiseButtons.DECEL_SET: ButtonType.decelCruise,
                 CruiseButtons.MAIN: ButtonType.altButton3, CruiseButtons.CANCEL: ButtonType.cancel}
+
+FrogPilotButtonType = custom.FrogPilotCarState.ButtonEvent.Type
 
 PEDAL_MSG = 0x201
 CAM_MSG = 0x320  # AEBCmd
@@ -315,7 +317,8 @@ class CarInterface(CarInterfaceBase):
         *create_button_events(self.CS.cruise_buttons, self.CS.prev_cruise_buttons, BUTTONS_DICT,
                               unpressed_btn=CruiseButtons.UNPRESS),
         *create_button_events(self.CS.distance_button, self.CS.prev_distance_button,
-                              {1: ButtonType.gapAdjustCruise})
+                              {1: ButtonType.gapAdjustCruise}),
+        *create_button_events(self.CS.lkas_enabled, self.CS.lkas_previously_enabled, {1: FrogPilotButtonType.lkas}),
       ]
 
     # The ECM allows enabling on falling edge of set, but only rising edge of resume

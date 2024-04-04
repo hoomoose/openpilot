@@ -110,17 +110,8 @@ class CarState(CarStateBase):
     self.cam_laneinfo = cp_cam.vl["CAM_LANEINFO"]
     ret.steerFaultPermanent = cp_cam.vl["CAM_LKAS"]["ERR_BIT_1"] == 1
 
-    # Experimental Mode via double clicking the LKAS button function
-    if frogpilot_variables.experimental_mode_via_lkas and ret.cruiseState.available:
-      lkas_pressed = not self.lkas_disabled
-
-      if lkas_pressed and not self.lkas_previously_pressed:
-        if frogpilot_variables.conditional_experimental_mode:
-          self.fpf.update_cestatus_lkas()
-        else:
-          self.fpf.update_experimental_mode()
-
-      self.lkas_previously_pressed = lkas_pressed
+    self.lkas_previously_enabled = self.lkas_enabled
+    self.lkas_enabled = not self.lkas_disabled
 
     return ret
 

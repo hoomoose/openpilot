@@ -196,18 +196,10 @@ class CarState(CarStateBase):
       else:
         self.distance_button = cp.vl["SDSU"]["FD_BUTTON"]
 
-    # Experimental Mode via double clicking the LKAS button function
-    if frogpilot_variables.experimental_mode_via_lkas and ret.cruiseState.available and self.CP.carFingerprint != CAR.PRIUS_V:
+    if self.CP.carFingerprint != CAR.PRIUS_V:
+      self.lkas_previously_enabled = self.lkas_enabled
       message_keys = ["LDA_ON_MESSAGE", "SET_ME_X02"]
-      lkas_pressed = any(self.lkas_hud.get(key) == 1 for key in message_keys)
-
-      if lkas_pressed and not self.lkas_previously_pressed:
-        if frogpilot_variables.conditional_experimental_mode:
-          self.fpf.update_cestatus_lkas()
-        else:
-          self.fpf.update_experimental_mode()
-
-      self.lkas_previously_pressed = lkas_pressed
+      self.lkas_enabled = any(self.lkas_hud.get(key) == 1 for key in message_keys)
 
     # Traffic signals for Speed Limit Controller - Credit goes to the DragonPilot team!
     self.update_traffic_signals(cp_cam)
