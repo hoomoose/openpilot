@@ -179,6 +179,7 @@ FrogPilotVehiclesPanel::FrogPilotVehiclesPanel(SettingsWindow *parent) : FrogPil
     }).detach();
   });
 
+  QObject::connect(uiState(), &UIState::offroadTransition, this, &FrogPilotVehiclesPanel::updateCarToggles);
   QObject::connect(uiState(), &UIState::uiUpdate, this, &FrogPilotVehiclesPanel::updateState);
 
   carMake = QString::fromStdString(params.get("CarMake"));
@@ -193,10 +194,6 @@ void FrogPilotVehiclesPanel::updateState(const UIState &s) {
   if (!isVisible()) return;
 
   started = s.scene.started;
-}
-
-void FrogPilotVehiclesPanel::showEvent(QShowEvent *event) {
-  updateCarToggles();
 }
 
 void FrogPilotVehiclesPanel::updateToggles() {

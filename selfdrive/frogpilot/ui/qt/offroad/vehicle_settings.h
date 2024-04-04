@@ -17,7 +17,6 @@ public:
 private:
   void hideToggles();
   void setModels();
-  void showEvent(QShowEvent *event);
   void updateCarToggles();
   void updateState(const UIState &s);
   void updateToggles();
