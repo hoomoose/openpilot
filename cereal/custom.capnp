@@ -29,6 +29,7 @@ struct FrogPilotPlan @0xda96579883444c35 {
   laneWidthRight @4 :Float32;
   minAcceleration @5 :Float32;
   maxAcceleration @6 :Float32;
+  redLight @7 :Bool;
   safeObstacleDistance @8 :Int16;
   safeObstacleDistanceStock @9 :Int16;
   stoppedEquivalenceFactor @14 :Int16;

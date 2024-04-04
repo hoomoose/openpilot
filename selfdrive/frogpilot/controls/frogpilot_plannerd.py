@@ -103,7 +103,7 @@ class FrogPilotPlannerd:
     else:
       self.v_cruise = v_cruise
 
-    if self.conditional_experimental_mode:
+    if self.conditional_experimental_mode or self.green_light_alert:
       self.cem.update(carState, controlsState.enabled, frogpilotNavigation, modelData, radarState, road_curvature, stop_distance, self.t_follow, v_ego)
 
   def update_t_follow(self, controlsState, frogpilotCarControl, radarState, v_ego, v_lead):
@@ -153,6 +153,8 @@ class FrogPilotPlannerd:
     frogpilotPlan.tFollow = float(self.t_follow)
     frogpilotPlan.vCruise = float(self.v_cruise)
 
+    frogpilotPlan.redLight = self.cem.red_light_detected
+
     pm.send('frogpilotPlan', frogpilot_plan_send)
 
   def update_frogpilot_params(self):
@@ -163,6 +165,7 @@ class FrogPilotPlannerd:
       self.cem.update_frogpilot_params()
 
     custom_alerts = self.params.get_bool("CustomAlerts")
+    self.green_light_alert = custom_alerts and self.params.get_bool("GreenLightAlert")
 
     self.custom_personalities = self.params.get_bool("CustomPersonalities")
     self.aggressive_follow = self.params.get_float("AggressiveFollow")
