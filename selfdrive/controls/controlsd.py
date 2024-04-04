@@ -21,7 +21,7 @@ from openpilot.common.swaglog import cloudlog
 from openpilot.selfdrive.car.car_helpers import get_startup_event
 from openpilot.selfdrive.car.card import CarD
 from openpilot.selfdrive.controls.lib.alertmanager import AlertManager, set_offroad_alert
-from openpilot.selfdrive.controls.lib.drive_helpers import VCruiseHelper, clip_curvature
+from openpilot.selfdrive.controls.lib.drive_helpers import CRUISE_LONG_PRESS, VCruiseHelper, clip_curvature
 from openpilot.selfdrive.controls.lib.events import Events, ET
 from openpilot.selfdrive.controls.lib.latcontrol import LatControl, MIN_LATERAL_CONTROL_SPEED
 from openpilot.selfdrive.controls.lib.latcontrol_pid import LatControlPID
@@ -180,6 +180,8 @@ class Controls:
     self.always_on_lateral = self.params.get_bool("AlwaysOnLateral")
     self.always_on_lateral_main = self.always_on_lateral and self.params.get_bool("AlwaysOnLateralMain")
     self.always_on_lateral_pause = self.always_on_lateral and self.params.get_bool("PauseAOLOnBrake")
+
+    self.gap_counter = 0
 
     self.update_frogpilot_params()
 
@@ -674,8 +676,22 @@ class Controls:
     # decrement personality on distance button press
     if self.CP.openpilotLongitudinalControl:
       if any(not be.pressed and be.type == ButtonType.gapAdjustCruise for be in CS.buttonEvents):
-        self.personality = (self.personality - 1) % 3
-        self.params.put_nonblocking('LongitudinalPersonality', str(self.personality))
+        self.gap_counter += 1
+
+      if self.gap_counter == CRUISE_LONG_PRESS and self.experimental_mode_via_distance:
+        if self.frogpilot_variables.conditional_experimental_mode:
+          conditional_status = self.params_memory.get_int("CEStatus")
+          override_value = 0 if conditional_status in {1, 2, 3, 4, 5, 6} else 1 if conditional_status >= 7 else 2
+          self.params_memory.put_int("CEStatus", override_value)
+        else:
+          self.params.put_nonblocking("ExperimentalMode", not self.experimental_mode)
+
+      if not any(not be.pressed and be.type == ButtonType.gapAdjustCruise for be in CS.buttonEvents):
+        if 0 < self.gap_counter < CRUISE_LONG_PRESS:
+          self.personality = (self.personality - 1) % 3
+          self.params.put_nonblocking('LongitudinalPersonality', str(self.personality))
+
+        self.gap_counter = 0
 
     return CC, lac_log
 
@@ -919,6 +935,10 @@ class Controls:
     custom_sounds = self.params.get_int("CustomSounds") if custom_theme else 0
     frog_sounds = custom_sounds == 1
     self.goat_scream = frog_sounds and self.params.get_bool("GoatScream")
+
+    experimental_mode_activation = self.params.get_bool("ExperimentalModeActivation")
+    self.experimental_mode_via_distance = experimental_mode_activation and self.params.get_bool("ExperimentalModeViaDistance")
+    self.frogpilot_variables.experimental_mode_via_lkas = experimental_mode_activation and self.params.get_bool("ExperimentalModeViaLKAS")
 
     lateral_tune = self.params.get_bool("LateralTune")
 

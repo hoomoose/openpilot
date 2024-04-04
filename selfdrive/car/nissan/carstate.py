@@ -121,6 +121,16 @@ class CarState(CarStateBase):
       self.lkas_hud_msg = copy.copy(cp_adas.vl["PROPILOT_HUD"])
       self.lkas_hud_info_msg = copy.copy(cp_adas.vl["PROPILOT_HUD_INFO_MSG"])
 
+    # Experimental Mode via double clicking the LKAS button function
+    if frogpilot_variables.experimental_mode_via_lkas and ret.cruiseState.available:
+      if self.lkas_enabled and not self.lkas_previously_pressed:
+        if frogpilot_variables.conditional_experimental_mode:
+          self.fpf.update_cestatus_lkas()
+        else:
+          self.fpf.update_experimental_mode()
+
+      self.lkas_previously_pressed = self.lkas_enabled
+
     return ret
 
   @staticmethod

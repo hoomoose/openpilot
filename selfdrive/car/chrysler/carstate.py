@@ -101,6 +101,21 @@ class CarState(CarStateBase):
     self.lkas_car_model = cp_cam.vl["DAS_6"]["CAR_MODEL"]
     self.button_counter = cp.vl["CRUISE_BUTTONS"]["COUNTER"]
 
+    # Experimental Mode via double clicking the LKAS button function
+    if frogpilot_variables.experimental_mode_via_lkas and ret.cruiseState.available:
+      if self.CP.carFingerprint in RAM_CARS:
+        lkas_pressed = cp.vl["Center_Stack_2"]["LKAS_Button"] or cp.vl["Center_Stack_1"]["LKAS_Button"]
+      else:
+        lkas_pressed = cp.vl["TRACTION_BUTTON"]["TOGGLE_LKAS"] == 1
+
+      if lkas_pressed and not self.lkas_previously_pressed:
+        if frogpilot_variables.conditional_experimental_mode:
+          self.fpf.update_cestatus_lkas()
+        else:
+          self.fpf.update_experimental_mode()
+
+      self.lkas_previously_pressed = lkas_pressed
+
     return ret
 
   @staticmethod

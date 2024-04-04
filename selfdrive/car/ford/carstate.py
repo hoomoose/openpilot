@@ -106,6 +106,18 @@ class CarState(CarStateBase):
     self.acc_tja_status_stock_values = cp_cam.vl["ACCDATA_3"]
     self.lkas_status_stock_values = cp_cam.vl["IPMA_Data"]
 
+    # Experimental Mode via double clicking the LKAS button function
+    if frogpilot_variables.experimental_mode_via_lkas and ret.cruiseState.available:
+      lkas_pressed = bool(cp.vl["Steering_Data_FD1"]["TjaButtnOnOffPress"])
+
+      if lkas_pressed and not self.lkas_previously_pressed:
+        if frogpilot_variables.conditional_experimental_mode:
+          self.fpf.update_cestatus_lkas()
+        else:
+          self.fpf.update_experimental_mode()
+
+      self.lkas_previously_pressed = lkas_pressed
+
     return ret
 
   @staticmethod

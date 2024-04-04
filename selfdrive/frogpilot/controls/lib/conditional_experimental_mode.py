@@ -37,13 +37,19 @@ class ConditionalExperimentalMode:
     lead = radarState.leadOne
     v_lead = lead.vLead
 
+    if self.experimental_mode_via_press:
+      overridden = self.params_memory.get_int("CEStatus")
+    else:
+      overridden = 0
+
     condition_met = self.check_conditions(carState, frogpilotNavigation, lead, modelData, stop_distance, v_ego)
-    if (not self.experimental_mode and condition_met) and enabled:
+    if (not self.experimental_mode and condition_met and overridden not in {1, 3, 5}) or overridden in {2, 4, 6} and enabled:
       self.experimental_mode = True
-    elif (self.experimental_mode and not condition_met) or not enabled:
+    elif (self.experimental_mode and not condition_met and overridden not in {2, 4, 6}) or overridden in {1, 3, 5} or not enabled:
       self.experimental_mode = False
       self.status_value = 0
 
+    self.status_value = overridden if overridden in {1, 2, 3, 4, 5, 6} else self.status_value
     if self.status_value != self.previous_status_value:
       self.params_memory.put_int("CEStatus", self.status_value)
       self.previous_status_value = self.status_value
@@ -155,6 +161,8 @@ class ConditionalExperimentalMode:
 
     self.curves = self.params.get_bool("CECurves")
     self.curves_lead = self.curves and self.params.get_bool("CECurvesLead")
+
+    self.experimental_mode_via_press = self.params.get_bool("ExperimentalModeActivation")
 
     self.limit = self.params.get_int("CESpeed") * (CV.KPH_TO_MS if is_metric else CV.MPH_TO_MS)
     self.limit_lead = self.params.get_int("CESpeedLead") * (CV.KPH_TO_MS if is_metric else CV.MPH_TO_MS)
