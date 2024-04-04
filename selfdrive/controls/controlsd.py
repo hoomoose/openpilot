@@ -957,10 +957,9 @@ class Controls:
 
     if self.green_light_alert:
       stopped_for_light = self.sm['frogpilotPlan'].redLight and CS.standstill
-      green_light = not stopped_for_light and self.stopped_for_light_previously
 
       if self.sm.frame % 50 == 0:
-        self.stopped_for_light_previously = stopped_for_light
+        green_light = not stopped_for_light and self.stopped_for_light_previously
 
         green_light &= not CS.gasPressed
         green_light &= not self.sm['longitudinalPlan'].hasLead
@@ -968,6 +967,8 @@ class Controls:
 
         if green_light:
           self.events.add(EventName.greenLight)
+
+      self.stopped_for_light_previously = stopped_for_light
 
     if self.sm.frame >= 1000 and self.holiday_themes and self.params_memory.get_int("CurrentHolidayTheme") != 0 and not self.holiday_theme_alerted:
       self.events.add(EventName.holidayActive)
