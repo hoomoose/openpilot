@@ -12,6 +12,7 @@ from openpilot.selfdrive.controls.lib.drive_helpers import V_CRUISE_MAX
 from openpilot.selfdrive.controls.lib.longitudinal_mpc_lib.long_mpc import COMFORT_BRAKE, STOP_DISTANCE, get_safe_obstacle_distance, get_stopped_equivalence_factor, get_T_FOLLOW
 from openpilot.selfdrive.controls.lib.longitudinal_planner import A_CRUISE_MIN, get_max_accel
 
+from openpilot.selfdrive.frogpilot.controls.lib.conditional_experimental_mode import ConditionalExperimentalMode
 from openpilot.selfdrive.frogpilot.controls.lib.frogpilot_functions import CITY_SPEED_LIMIT, CRUISING_SPEED, calculate_lane_width, calculate_road_curvature
 
 # Acceleration profiles - Credit goes to the DragonPilot team!
@@ -44,6 +45,8 @@ class FrogPilotPlannerd:
 
     self.params = Params()
     self.params_memory = Params("/dev/shm/params")
+
+    self.cem = ConditionalExperimentalMode()
 
     self.t_follow = 0
 
@@ -90,6 +93,9 @@ class FrogPilotPlannerd:
     else:
       self.v_cruise = v_cruise
 
+    if self.conditional_experimental_mode:
+      self.cem.update(carState, controlsState.enabled, frogpilotNavigation, modelData, radarState, road_curvature, stop_distance, self.t_follow, v_ego)
+
   def update_t_follow(self, controlsState, frogpilotCarControl, radarState, v_ego, v_lead):
     t_follow = get_T_FOLLOW(controlsState.personality)
 
@@ -123,6 +129,8 @@ class FrogPilotPlannerd:
     frogpilot_plan_send.valid = sm.all_checks(service_list=['carState', 'controlsState'])
     frogpilotPlan = frogpilot_plan_send.frogpilotPlan
 
+    frogpilotPlan.conditionalExperimental = self.cem.experimental_mode
+
     frogpilotPlan.laneWidthLeft = self.lane_width_left
     frogpilotPlan.laneWidthRight = self.lane_width_right
     frogpilotPlan.minAcceleration = self.min_accel
@@ -134,6 +142,10 @@ class FrogPilotPlannerd:
 
   def update_frogpilot_params(self):
     self.is_metric = self.params.get_bool("IsMetric")
+
+    self.conditional_experimental_mode = self.params.get_bool("ConditionalExperimental")
+    if self.conditional_experimental_mode:
+      self.cem.update_frogpilot_params()
 
     custom_alerts = self.params.get_bool("CustomAlerts")
 

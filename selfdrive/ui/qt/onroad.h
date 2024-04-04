@@ -124,11 +124,15 @@ private:
   bool experimentalMode;
   bool mapOpen;
   bool showAlwaysOnLateralStatusBar;
+  bool showConditionalExperimentalStatusBar;
 
   float currentAcceleration;
 
   int alertSize;
   int cameraView;
+  int conditionalSpeed;
+  int conditionalSpeedLead;
+  int conditionalStatus;
 
 protected:
   void paintGL() override;

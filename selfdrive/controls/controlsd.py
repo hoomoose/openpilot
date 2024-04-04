@@ -861,7 +861,11 @@ class Controls:
   def params_thread(self, evt):
     while not evt.is_set():
       self.is_metric = self.params.get_bool("IsMetric")
-      self.experimental_mode = self.params.get_bool("ExperimentalMode") and self.CP.openpilotLongitudinalControl
+      if self.CP.openpilotLongitudinalControl:
+         if not self.frogpilot_variables.conditional_experimental_mode:
+           self.experimental_mode = self.params.get_bool("ExperimentalMode")
+      else:
+        self.experimental_mode = False
       self.personality = self.read_personality_param()
       if self.CP.notCar:
         self.joystick_mode = self.params.get_bool("JoystickDebugMode")
@@ -895,6 +899,9 @@ class Controls:
     if self.FPCC.alwaysOnLateral:
       self.current_alert_types.append(ET.WARNING)
 
+    if self.frogpilot_variables.conditional_experimental_mode:
+      self.experimental_mode = self.sm['frogpilotPlan'].conditionalExperimental
+
     if self.params_memory.get_bool("FrogPilotTogglesUpdated"):
       self.update_frogpilot_params()
 
@@ -904,6 +911,8 @@ class Controls:
     self.pm.send('frogpilotCarControl', fpcc_send)
 
   def update_frogpilot_params(self):
+    self.frogpilot_variables.conditional_experimental_mode = self.params.get_bool("ConditionalExperimental")
+
     custom_alerts = self.params.get_bool("CustomAlerts")
 
     lateral_tune = self.params.get_bool("LateralTune")
