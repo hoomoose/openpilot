@@ -69,6 +69,7 @@ class Soundd:
     self.params = Params()
     self.params_memory = Params("/dev/shm/params")
 
+    self.previous_sound_directory = None
     self.random_events_directory = BASEDIR + "/selfdrive/frogpilot/assets/random_events/sounds/"
 
     self.random_events_map = {
@@ -255,7 +256,10 @@ class Soundd:
       theme_name = theme_configuration.get(custom_sounds)
       self.sound_directory = BASEDIR + ("/selfdrive/frogpilot/assets/custom_themes/" + theme_name + "/sounds/" if custom_sounds != 0 else "/selfdrive/assets/sounds/")
 
-    self.load_sounds()
+    if self.sound_directory != self.previous_sound_directory:
+      self.load_sounds()
+
+    self.previous_sound_directory = self.sound_directory
 
 def main():
   s = Soundd()
