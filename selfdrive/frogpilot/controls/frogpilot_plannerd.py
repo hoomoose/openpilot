@@ -32,7 +32,7 @@ A_CRUISE_MAX_VALS_SPORT = [3.5, 3.5, 3.3, 2.8, 1.5, 1.0, .75, .6, .38, .2]
 TRAFFIC_MODE_BP = [0., CITY_SPEED_LIMIT]
 TRAFFIC_MODE_T_FOLLOW = [.50, 1.]
 
-TARGET_LAT_A = 1.9  # m/s^2
+TARGET_LAT_A = 2.7  # m/s^2
 
 def get_min_accel_eco(v_ego):
   return interp(v_ego, A_CRUISE_MIN_BP_CUSTOM, A_CRUISE_MIN_VALS_ECO)
