@@ -56,6 +56,8 @@ class CarInterface(CarInterfaceBase):
             ret.flags |= HyundaiFlags.CANFD_ALT_GEARS.value
         if candidate not in CANFD_RADAR_SCC_CAR:
           ret.flags |= HyundaiFlags.CANFD_CAMERA_SCC.value
+          ret.radarUnavailable = False
+          
     else:
       # TODO: detect EV and hybrid
       if candidate in HYBRID_CAR:
@@ -80,8 +82,6 @@ class CarInterface(CarInterfaceBase):
       ret.longitudinalTuning.kpV = [0.1]
       ret.longitudinalTuning.kiV = [0.0]
       ret.experimentalLongitudinalAvailable = candidate not in (CANFD_UNSUPPORTED_LONGITUDINAL_CAR | CANFD_RADAR_SCC_CAR)
-      if (candidate not in (CANFD_UNSUPPORTED_LONGITUDINAL_CAR | CANFD_RADAR_SCC_CAR)) and not hda2:
-        ret.radarUnavailable = False
     else:
       ret.longitudinalTuning.kpV = [0.5]
       ret.longitudinalTuning.kiV = [0.0]
