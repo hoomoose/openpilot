@@ -1,6 +1,7 @@
 from cereal import car
 from panda import Panda
 from openpilot.selfdrive.car.hyundai.hyundaicanfd import CanBus
+from openpilot.common.params import Params
 from openpilot.selfdrive.car.hyundai.values import HyundaiFlags, CAR, DBC, CANFD_CAR, CAMERA_SCC_CAR, CANFD_RADAR_SCC_CAR, \
                                          CANFD_UNSUPPORTED_LONGITUDINAL_CAR, EV_CAR, HYBRID_CAR, LEGACY_SAFETY_MODE_CAR, \
                                          UNSUPPORTED_LONGITUDINAL_CAR, Buttons
@@ -55,9 +56,8 @@ class CarInterface(CarInterfaceBase):
           else:
             ret.flags |= HyundaiFlags.CANFD_ALT_GEARS.value
         if candidate not in CANFD_RADAR_SCC_CAR:
-          ret.flags |= HyundaiFlags.CANFD_CAMERA_SCC.value
           ret.radarUnavailable = False
-          
+          ret.flags |= HyundaiFlags.CANFD_CAMERA_SCC.value
     else:
       # TODO: detect EV and hybrid
       if candidate in HYBRID_CAR:
@@ -86,8 +86,6 @@ class CarInterface(CarInterfaceBase):
       ret.longitudinalTuning.kpV = [0.5]
       ret.longitudinalTuning.kiV = [0.0]
       ret.experimentalLongitudinalAvailable = candidate not in (UNSUPPORTED_LONGITUDINAL_CAR | CAMERA_SCC_CAR)
-      if candidate in CAMERA_SCC_CAR:
-        ret.radarUnavailable = False
     ret.openpilotLongitudinalControl = experimental_long and ret.experimentalLongitudinalAvailable
     ret.pcmCruise = not ret.openpilotLongitudinalControl
 
