@@ -18,11 +18,6 @@ def get_radar_can_parser(CP):
         lead_src, bus = "SCC_CONTROL", CanBus(CP).CAM
       else:
         return None
-    else:
-      if CP.Flags & HyundaiFlags.CAMERA_SCC:
-        lead_src, bus = "SCC11", 2
-      else:
-        return None
     messages = [(lead_src, 50)]
     return CANParser(DBC[CP.carFingerprint]['pt'], messages, bus)
 
@@ -34,11 +29,9 @@ class RadarInterface(RadarInterfaceBase):
   def __init__(self, CP):
     super().__init__(CP)
     self.CP = CP
-    self.camera_scc = CP.Flags & HyundaiFlags.CANFD_CAMERA_SCC if CP.carFingerprint in CANFD_CAR else \
-                      CP.Flags & HyundaiFlags.CAMERA_SCC
+    self.camera_scc = CP.Flags & HyundaiFlags.CANFD_CAMERA_SCC                      
     self.updated_messages = set()
-    self.trigger_msg = 0x1A0 if self.camera_scc and CP.carFingerprint in CANFD_CAR else \
-                       0x420 if self.camera_scc else \
+    self.trigger_msg = 0x1A0 if self.camera_scc else \
                        (RADAR_START_ADDR + RADAR_MSG_COUNT - 1)
     self.track_id = 0
 
@@ -74,11 +67,9 @@ class RadarInterface(RadarInterfaceBase):
     ret.errors = errors
 
     if self.camera_scc:
-      msg_src = "SCC_CONTROL" if self.CP.carFingerprint in CANFD_CAR else \
-                "SCC11"
+      msg_src = "SCC_CONTROL"
       msg = self.rcp.vl[msg_src]
-      valid = msg['ACC_ObjDist'] < 204.6 if self.CP.carFingerprint in CANFD_CAR else \
-              msg['ACC_ObjStatus']
+      valid = msg['ACC_ObjDist'] < 204.6
       for ii in range(1):
         if valid:
           if ii not in self.pts:
